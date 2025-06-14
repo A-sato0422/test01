@@ -248,7 +248,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                 transition={{ delay: 0.5 }}
                 className="bg-blue-50 border border-blue-200 rounded-xl p-4"
               >
-                <h4 className="font-semibold text-blue-800 mb-2">📝 次のステップ</h4>
+                <h4 className="font-semibold text-blue-800 mb-2">📝 アカウント作成後の流れ</h4>
                 <p className="text-sm text-blue-700">
                   アカウント作成後、15の質問に答えてプロフィールを完成させます。
                   これにより、より正確な相性診断が可能になります。
@@ -282,7 +282,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                   処理中...
                 </div>
               ) : (
-                mode === 'signup' ? 'アカウント作成' : 'ログイン'
+                mode === 'signup' ? '質問に回答' : 'ログイン'
               )}
             </motion.button>
           </form>
