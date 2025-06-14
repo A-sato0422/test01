@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Check, Search, RefreshCw } from 'lucide-react';
+import { Users, Check, Search, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
+import { questions } from '../data/questions';
 
 interface UserSelectionProps {
   onUsersSelected: (user1: User, user2: User) => void;
   currentUser: User;
 }
 
+interface UserWithAnswerStatus extends User {
+  hasAnswers: boolean;
+  answerCount: number;
+}
+
 const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentUser }) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser1, setSelectedUser1] = useState<User | null>(null);
-  const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
+  const [users, setUsers] = useState<UserWithAnswerStatus[]>([]);
+  const [selectedUser1, setSelectedUser1] = useState<UserWithAnswerStatus | null>(null);
+  const [selectedUser2, setSelectedUser2] = useState<UserWithAnswerStatus | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,16 +32,34 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
     setError('');
 
     try {
-      const { data, error } = await supabase
+      // ユーザー一覧を取得
+      const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
+      if (usersError) {
         setError('ユーザー一覧の取得に失敗しました');
-      } else {
-        setUsers(data || []);
+        return;
       }
+
+      // 各ユーザーの回答状況を取得
+      const usersWithAnswerStatus = await Promise.all(
+        (usersData || []).map(async (user) => {
+          const { data: answers } = await supabase
+            .from('answers')
+            .select('id')
+            .eq('user_id', user.id);
+
+          return {
+            ...user,
+            hasAnswers: (answers?.length || 0) === questions.length,
+            answerCount: answers?.length || 0
+          };
+        })
+      );
+
+      setUsers(usersWithAnswerStatus);
     } catch (err) {
       setError('予期しないエラーが発生しました');
     } finally {
@@ -48,7 +72,7 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleUserSelect = (user: User, position: 1 | 2) => {
+  const handleUserSelect = (user: UserWithAnswerStatus, position: 1 | 2) => {
     if (position === 1) {
       setSelectedUser1(user);
       // 同じユーザーが選択されている場合、2人目をクリア
@@ -70,14 +94,47 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
     }
   };
 
-  const isUserSelected = (user: User) => {
+  const isUserSelected = (user: UserWithAnswerStatus) => {
     return selectedUser1?.id === user.id || selectedUser2?.id === user.id;
   };
 
-  const getSelectionLabel = (user: User) => {
+  const getSelectionLabel = (user: UserWithAnswerStatus) => {
     if (selectedUser1?.id === user.id) return '1人目';
     if (selectedUser2?.id === user.id) return '2人目';
     return null;
+  };
+
+  const getAnswerStatusIcon = (user: UserWithAnswerStatus) => {
+    if (user.hasAnswers) {
+      return <CheckCircle className="w-4 h-4 text-green-500" />;
+    } else if (user.answerCount > 0) {
+      return <AlertCircle className="w-4 h-4 text-yellow-500" />;
+    } else {
+      return <AlertCircle className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  const getAnswerStatusText = (user: UserWithAnswerStatus) => {
+    if (user.hasAnswers) {
+      return '回答済み';
+    } else if (user.answerCount > 0) {
+      return `${user.answerCount}/${questions.length}問回答済み`;
+    } else {
+      return '未回答';
+    }
+  };
+
+  const getDiagnosisButtonText = () => {
+    if (!selectedUser1 || !selectedUser2) {
+      return '2人のユーザーを選択してください';
+    }
+
+    const bothHaveAnswers = selectedUser1.hasAnswers && selectedUser2.hasAnswers;
+    if (bothHaveAnswers) {
+      return `${selectedUser1.name} と ${selectedUser2.name} の相性診断結果を表示`;
+    } else {
+      return `${selectedUser1.name} と ${selectedUser2.name} の相性診断を開始`;
+    }
   };
 
   return (
@@ -116,20 +173,36 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-center p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl">
               <div className="w-3 h-3 bg-pink-400 rounded-full mr-3" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600">1人目</p>
                 <p className="text-gray-800">
                   {selectedUser1 ? selectedUser1.name : '未選択'}
                 </p>
+                {selectedUser1 && (
+                  <div className="flex items-center mt-1">
+                    {getAnswerStatusIcon(selectedUser1)}
+                    <span className="text-xs text-gray-500 ml-1">
+                      {getAnswerStatusText(selectedUser1)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
               <div className="w-3 h-3 bg-blue-400 rounded-full mr-3" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600">2人目</p>
                 <p className="text-gray-800">
                   {selectedUser2 ? selectedUser2.name : '未選択'}
                 </p>
+                {selectedUser2 && (
+                  <div className="flex items-center mt-1">
+                    {getAnswerStatusIcon(selectedUser2)}
+                    <span className="text-xs text-gray-500 ml-1">
+                      {getAnswerStatusText(selectedUser2)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -171,6 +244,20 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
             <h3 className="text-lg font-semibold text-gray-800">
               登録ユーザー一覧 ({filteredUsers.length}人)
             </h3>
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center">
+                <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
+                回答済み
+              </div>
+              <div className="flex items-center">
+                <AlertCircle className="w-3 h-3 text-yellow-500 mr-1" />
+                部分回答
+              </div>
+              <div className="flex items-center">
+                <AlertCircle className="w-3 h-3 text-gray-400 mr-1" />
+                未回答
+              </div>
+            </div>
           </div>
 
           {loading ? (
@@ -221,10 +308,16 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
                     )}
 
                     <div className="mb-3">
-                      <h4 className="font-semibold text-gray-800 mb-1">{user.name}</h4>
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-semibold text-gray-800">{user.name}</h4>
+                        {getAnswerStatusIcon(user)}
+                      </div>
                       <p className="text-sm text-gray-600 truncate">{user.email}</p>
                       <p className="text-xs text-gray-500 mt-1">
                         登録日: {new Date(user.created_at).toLocaleDateString('ja-JP')}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {getAnswerStatusText(user)}
                       </p>
                     </div>
 
@@ -287,11 +380,21 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
           >
-            {selectedUser1 && selectedUser2
-              ? `${selectedUser1.name} と ${selectedUser2.name} の相性診断を開始`
-              : '2人のユーザーを選択してください'
-            }
+            {getDiagnosisButtonText()}
           </button>
+          
+          {selectedUser1 && selectedUser2 && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <p className="text-sm text-blue-700">
+                {selectedUser1.hasAnswers && selectedUser2.hasAnswers
+                  ? '💡 両方のユーザーが回答済みのため、すぐに結果を表示します'
+                  : selectedUser1.hasAnswers || selectedUser2.hasAnswers
+                  ? '📝 一方のユーザーが未回答のため、質問に答えてから結果を表示します'
+                  : '📝 両方のユーザーが未回答のため、順番に質問に答えてから結果を表示します'
+                }
+              </p>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>

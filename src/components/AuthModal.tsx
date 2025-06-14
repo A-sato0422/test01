@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import SignupQuiz from './SignupQuiz';
+import { Answer } from '../types';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -17,8 +19,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [newUserId, setNewUserId] = useState('');
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, completeSignupQuiz } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +31,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
 
     try {
       if (mode === 'signup') {
-        const { error } = await signUp(email, password, name);
+        const { error, needsQuiz, userId } = await signUp(email, password, name);
         if (error) {
           setError(error.message);
+        } else if (needsQuiz && userId) {
+          setNewUserId(userId);
+          setShowQuiz(true);
         } else {
           onClose();
         }
@@ -48,12 +55,36 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
     }
   };
 
+  const handleQuizComplete = async (answers: Answer[]) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const { error } = await completeSignupQuiz(newUserId, answers);
+      if (error) {
+        setError('プロフィール設定に失敗しました');
+        setShowQuiz(false);
+      } else {
+        setShowQuiz(false);
+        onClose();
+        resetForm();
+      }
+    } catch (err) {
+      setError('予期しないエラーが発生しました');
+      setShowQuiz(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setEmail('');
     setPassword('');
     setName('');
     setError('');
     setShowPassword(false);
+    setShowQuiz(false);
+    setNewUserId('');
   };
 
   const handleModeChange = (newMode: 'signin' | 'signup') => {
@@ -61,7 +92,27 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
     onModeChange(newMode);
   };
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   if (!isOpen) return null;
+
+  // 質問画面を表示
+  if (showQuiz) {
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="w-full max-w-2xl">
+          <SignupQuiz
+            userName={name}
+            userId={newUserId}
+            onComplete={handleQuizComplete}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AnimatePresence>
@@ -70,7 +121,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-        onClick={onClose}
+        onClick={handleClose}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -81,7 +132,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
             <X className="w-5 h-5 text-gray-500" />
@@ -190,6 +241,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
               )}
             </motion.div>
 
+            {mode === 'signup' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-blue-50 border border-blue-200 rounded-xl p-4"
+              >
+                <h4 className="font-semibold text-blue-800 mb-2">📝 次のステップ</h4>
+                <p className="text-sm text-blue-700">
+                  アカウント作成後、15の質問に答えてプロフィールを完成させます。
+                  これにより、より正確な相性診断が可能になります。
+                </p>
+              </motion.div>
+            )}
+
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -203,7 +269,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: mode === 'signup' ? 0.5 : 0.4 }}
+              transition={{ delay: mode === 'signup' ? 0.6 : 0.4 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
@@ -218,7 +284,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
               ) : (
                 mode === 'signup' ? 'アカウント作成' : 'ログイン'
               )}
-            </motion.button>
+            </button>
           </form>
 
           <div className="mt-6 text-center">

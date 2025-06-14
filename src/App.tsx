@@ -27,13 +27,60 @@ function AppContent() {
     setState('userSelection');
   };
 
-  const handleUsersSelected = (user1: User, user2: User) => {
+  const handleUsersSelected = async (user1: User, user2: User) => {
     setSelectedUser1(user1);
     setSelectedUser2(user2);
-    setCurrentQuestionIndex(0);
-    setUser1Answers([]);
-    setUser2Answers([]);
-    setState('quiz1');
+    
+    // 既存の回答データを取得
+    const [user1AnswersData, user2AnswersData] = await Promise.all([
+      supabase.from('answers').select('*').eq('user_id', user1.id).order('question_id'),
+      supabase.from('answers').select('*').eq('user_id', user2.id).order('question_id')
+    ]);
+
+    const user1ExistingAnswers = user1AnswersData.data || [];
+    const user2ExistingAnswers = user2AnswersData.data || [];
+
+    // 両方のユーザーが全ての質問に回答済みかチェック
+    const hasAllAnswers1 = user1ExistingAnswers.length === questions.length;
+    const hasAllAnswers2 = user2ExistingAnswers.length === questions.length;
+
+    if (hasAllAnswers1 && hasAllAnswers2) {
+      // 両方とも回答済み - 直接結果を計算
+      setUser1Answers(user1ExistingAnswers);
+      setUser2Answers(user2ExistingAnswers);
+      
+      const score = calculateCompatibility(user1ExistingAnswers, user2ExistingAnswers);
+      setCompatibilityScore(score);
+
+      // 相性結果をデータベースに保存
+      await supabase
+        .from('compatibility_results')
+        .upsert([{
+          user1_id: user1.id,
+          user2_id: user2.id,
+          compatibility_score: score
+        }]);
+
+      setState('result');
+    } else if (hasAllAnswers1 && !hasAllAnswers2) {
+      // ユーザー1は回答済み、ユーザー2は未回答
+      setUser1Answers(user1ExistingAnswers);
+      setUser2Answers([]);
+      setCurrentQuestionIndex(0);
+      setState('quiz2');
+    } else if (!hasAllAnswers1 && hasAllAnswers2) {
+      // ユーザー1は未回答、ユーザー2は回答済み
+      setUser1Answers([]);
+      setUser2Answers(user2ExistingAnswers);
+      setCurrentQuestionIndex(0);
+      setState('quiz1');
+    } else {
+      // 両方とも未回答または部分的に回答済み
+      setUser1Answers(user1ExistingAnswers);
+      setUser2Answers(user2ExistingAnswers);
+      setCurrentQuestionIndex(user1ExistingAnswers.length);
+      setState('quiz1');
+    }
   };
 
   const handleUser1Answer = async (value: number) => {
@@ -62,8 +109,34 @@ function AppContent() {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      setCurrentQuestionIndex(0);
-      setState('quiz2');
+      // ユーザー2の回答状況をチェック
+      const { data: user2ExistingAnswers } = await supabase
+        .from('answers')
+        .select('*')
+        .eq('user_id', selectedUser2!.id)
+        .order('question_id');
+
+      if (user2ExistingAnswers && user2ExistingAnswers.length === questions.length) {
+        // ユーザー2も回答済み - 直接結果を計算
+        setUser2Answers(user2ExistingAnswers);
+        const score = calculateCompatibility(newAnswers, user2ExistingAnswers);
+        setCompatibilityScore(score);
+
+        // 相性結果をデータベースに保存
+        await supabase
+          .from('compatibility_results')
+          .upsert([{
+            user1_id: selectedUser1.id,
+            user2_id: selectedUser2!.id,
+            compatibility_score: score
+          }]);
+
+        setState('result');
+      } else {
+        // ユーザー2の質問に進む
+        setCurrentQuestionIndex(user2ExistingAnswers?.length || 0);
+        setState('quiz2');
+      }
     }
   };
 

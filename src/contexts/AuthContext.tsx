@@ -6,9 +6,10 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: any; needsQuiz?: boolean; userId?: string }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  completeSignupQuiz: (userId: string, answers: any[]) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,10 +72,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (insertError) {
         console.error('Error inserting user data:', insertError);
+        return { error: insertError };
       }
+
+      // 新規ユーザーには質問回答が必要
+      return { error: null, needsQuiz: true, userId: data.user.id };
     }
 
     return { error };
+  };
+
+  const completeSignupQuiz = async (userId: string, answers: any[]) => {
+    try {
+      // 回答をデータベースに保存
+      const answersToInsert = answers.map(answer => ({
+        user_id: userId,
+        question_id: answer.question_id,
+        answer_value: answer.answer_value
+      }));
+
+      const { error } = await supabase
+        .from('answers')
+        .insert(answersToInsert);
+
+      return { error };
+    } catch (err) {
+      return { error: err };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
@@ -97,6 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signIn,
     signOut,
+    completeSignupQuiz,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
