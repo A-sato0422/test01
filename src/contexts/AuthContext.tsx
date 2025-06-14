@@ -48,17 +48,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name: name,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+          },
         },
-      },
-    });
+      });
 
-    if (!error && data.user) {
+      if (error) {
+        return { error };
+      }
+
+      if (!data.user) {
+        return { error: new Error('ユーザー作成に失敗しました') };
+      }
+
       // ユーザー情報をusersテーブルに保存
       const { error: insertError } = await supabase
         .from('users')
@@ -77,9 +85,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 新規ユーザーには質問回答が必要
       return { error: null, needsQuiz: true, userId: data.user.id };
+    } catch (err) {
+      return { error: err };
     }
-
-    return { error };
   };
 
   const completeSignupQuiz = async (userId: string, answers: any[]) => {
