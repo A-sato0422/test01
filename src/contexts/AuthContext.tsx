@@ -68,6 +68,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: new Error('アカウント作成に失敗しました') };
       }
 
+      // 認証成功後、即座にusersテーブルにユーザー情報を保存
+      const { error: insertUserError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: data.user.id,
+            name: name,
+            email: email,
+          },
+        ]);
+
+      if (insertUserError) {
+        console.error('Error inserting user data:', insertUserError);
+        // ユーザー情報の保存に失敗した場合、認証ユーザーも削除
+        await supabase.auth.admin.deleteUser(data.user.id);
+        return { error: insertUserError };
+      }
+
       // サインアップが成功した場合、クイズが必要であることを示す
       return { error: null, needsQuiz: true, tempUserId: data.user.id };
     } catch (err) {
@@ -77,23 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const completeSignupQuiz = async (tempUserId: string, email: string, password: string, name: string, answers: any[]) => {
     try {
-      // ユーザーは既にサインアップ済みなので、ユーザー情報をusersテーブルに保存
-      const { error: insertUserError } = await supabase
-        .from('users')
-        .insert([
-          {
-            id: tempUserId,
-            name: name,
-            email: email,
-          },
-        ]);
-
-      if (insertUserError) {
-        console.error('Error inserting user data:', insertUserError);
-        return { error: insertUserError };
-      }
-
-      // 回答をデータベースに保存
+      // 回答をデータベースに保存（ユーザー情報は既に保存済み）
       const answersToInsert = answers.map(answer => ({
         user_id: tempUserId,
         question_id: answer.question_id,
