@@ -6,10 +6,10 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: any; needsQuiz?: boolean; userId?: string }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: any; needsQuiz?: boolean; tempUserId?: string }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  completeSignupQuiz: (userId: string, answers: any[]) => Promise<{ error: any }>;
+  completeSignupQuiz: (tempUserId: string, email: string, password: string, name: string, answers: any[]) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,7 +49,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // 一時的なユーザーIDを生成（実際のアカウント作成は質問回答後）
+      const tempUserId = crypto.randomUUID();
+      
+      // メールアドレスの重複チェック
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        return { error: new Error('このメールアドレスは既に使用されています') };
+      }
+
+      return { error: null, needsQuiz: true, tempUserId };
+    } catch (err) {
+      return { error: err };
+    }
+  };
+
+  const completeSignupQuiz = async (tempUserId: string, email: string, password: string, name: string, answers: any[]) => {
+    try {
+      // 実際のSupabaseアカウントを作成
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -59,16 +82,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
 
-      if (error) {
-        return { error };
+      if (authError) {
+        return { error: authError };
       }
 
       if (!data.user) {
-        return { error: new Error('ユーザー作成に失敗しました') };
+        return { error: new Error('アカウント作成に失敗しました') };
       }
 
       // ユーザー情報をusersテーブルに保存
-      const { error: insertError } = await supabase
+      const { error: insertUserError } = await supabase
         .from('users')
         .insert([
           {
@@ -78,32 +101,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
         ]);
 
-      if (insertError) {
-        console.error('Error inserting user data:', insertError);
-        return { error: insertError };
+      if (insertUserError) {
+        console.error('Error inserting user data:', insertUserError);
+        return { error: insertUserError };
       }
 
-      // 新規ユーザーには質問回答が必要
-      return { error: null, needsQuiz: true, userId: data.user.id };
-    } catch (err) {
-      return { error: err };
-    }
-  };
-
-  const completeSignupQuiz = async (userId: string, answers: any[]) => {
-    try {
       // 回答をデータベースに保存
       const answersToInsert = answers.map(answer => ({
-        user_id: userId,
+        user_id: data.user.id,
         question_id: answer.question_id,
         answer_value: answer.answer_value
       }));
 
-      const { error } = await supabase
+      const { error: insertAnswersError } = await supabase
         .from('answers')
         .insert(answersToInsert);
 
-      return { error };
+      if (insertAnswersError) {
+        console.error('Error inserting answers:', insertAnswersError);
+        return { error: insertAnswersError };
+      }
+
+      return { error: null };
     } catch (err) {
       return { error: err };
     }

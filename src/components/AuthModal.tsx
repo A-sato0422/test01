@@ -20,7 +20,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showQuiz, setShowQuiz] = useState(false);
-  const [newUserId, setNewUserId] = useState('');
+  const [tempUserId, setTempUserId] = useState('');
+  const [signupData, setSignupData] = useState<{email: string, password: string, name: string} | null>(null);
 
   const { signIn, signUp, completeSignupQuiz } = useAuth();
 
@@ -31,14 +32,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
 
     try {
       if (mode === 'signup') {
-        const { error, needsQuiz, userId } = await signUp(email, password, name);
+        const { error, needsQuiz, tempUserId: newTempUserId } = await signUp(email, password, name);
         if (error) {
           setError(error.message);
-        } else if (needsQuiz && userId) {
-          setNewUserId(userId);
+        } else if (needsQuiz && newTempUserId) {
+          setTempUserId(newTempUserId);
+          setSignupData({ email, password, name });
           setShowQuiz(true);
-        } else {
-          onClose();
         }
       } else {
         const { error } = await signIn(email, password);
@@ -56,13 +56,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
   };
 
   const handleQuizComplete = async (answers: Answer[]) => {
+    if (!signupData) return;
+    
     setLoading(true);
     setError('');
 
     try {
-      const { error } = await completeSignupQuiz(newUserId, answers);
+      const { error } = await completeSignupQuiz(
+        tempUserId, 
+        signupData.email, 
+        signupData.password, 
+        signupData.name, 
+        answers
+      );
+      
       if (error) {
-        setError('プロフィール設定に失敗しました');
+        setError('アカウント作成に失敗しました: ' + error.message);
         setShowQuiz(false);
       } else {
         setShowQuiz(false);
@@ -84,7 +93,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
     setError('');
     setShowPassword(false);
     setShowQuiz(false);
-    setNewUserId('');
+    setTempUserId('');
+    setSignupData(null);
   };
 
   const handleModeChange = (newMode: 'signin' | 'signup') => {
@@ -100,14 +110,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
   if (!isOpen) return null;
 
   // 質問画面を表示
-  if (showQuiz) {
+  if (showQuiz && signupData) {
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div className="w-full max-w-2xl">
           <SignupQuiz
-            userName={name}
-            userId={newUserId}
+            userName={signupData.name}
+            userId={tempUserId}
             onComplete={handleQuizComplete}
+            onCancel={() => {
+              setShowQuiz(false);
+              setError('');
+            }}
           />
         </div>
       </div>
@@ -248,10 +262,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                 transition={{ delay: 0.5 }}
                 className="bg-blue-50 border border-blue-200 rounded-xl p-4"
               >
-                <h4 className="font-semibold text-blue-800 mb-2">📝 アカウント作成後の流れ</h4>
+                <h4 className="font-semibold text-blue-800 mb-2">📝 アカウント作成の流れ</h4>
                 <p className="text-sm text-blue-700">
-                  アカウント作成後、15の質問に答えてプロフィールを完成させます。
-                  これにより、より正確な相性診断が可能になります。
+                  「質問に回答」ボタンを押すと、15の質問に答える画面に移ります。
+                  すべての質問に回答完了後、アカウントが正式に作成されます。
                 </p>
               </motion.div>
             )}
