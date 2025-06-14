@@ -256,15 +256,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                 )}
               </motion.div>
 
-              {mode === 'signup' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="bg-blue-50 border border-blue-200 rounded-xl p-4"
-                >
-                </motion.div>
-              )}
+        
 
               {error && (
                 <motion.div
