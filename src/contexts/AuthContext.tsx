@@ -49,28 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
-      // 一時的なユーザーIDを生成（実際のアカウント作成は質問回答後）
-      const tempUserId = crypto.randomUUID();
-      
-      // メールアドレスの重複チェック
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('email')
-        .eq('email', email);
-
-      if (existingUser && existingUser.length > 0) {
-        return { error: new Error('このメールアドレスは既に使用されています') };
-      }
-
-      return { error: null, needsQuiz: true, tempUserId };
-    } catch (err) {
-      return { error: err };
-    }
-  };
-
-  const completeSignupQuiz = async (tempUserId: string, email: string, password: string, name: string, answers: any[]) => {
-    try {
-      // 実際のSupabaseアカウントを作成
+      // Supabaseの認証システムで直接サインアップを試行
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -89,12 +68,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: new Error('アカウント作成に失敗しました') };
       }
 
-      // ユーザー情報をusersテーブルに保存
+      // サインアップが成功した場合、クイズが必要であることを示す
+      return { error: null, needsQuiz: true, tempUserId: data.user.id };
+    } catch (err) {
+      return { error: err };
+    }
+  };
+
+  const completeSignupQuiz = async (tempUserId: string, email: string, password: string, name: string, answers: any[]) => {
+    try {
+      // ユーザーは既にサインアップ済みなので、ユーザー情報をusersテーブルに保存
       const { error: insertUserError } = await supabase
         .from('users')
         .insert([
           {
-            id: data.user.id,
+            id: tempUserId,
             name: name,
             email: email,
           },
@@ -107,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 回答をデータベースに保存
       const answersToInsert = answers.map(answer => ({
-        user_id: data.user.id,
+        user_id: tempUserId,
         question_id: answer.question_id,
         answer_value: answer.answer_value
       }));
@@ -119,6 +107,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (insertAnswersError) {
         console.error('Error inserting answers:', insertAnswersError);
         return { error: insertAnswersError };
+      }
+
+      // サインアップ完了後、自動的にサインイン
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        console.error('Error signing in after signup:', signInError);
+        return { error: signInError };
       }
 
       return { error: null };
