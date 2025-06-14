@@ -150,15 +150,17 @@ const SignupQuiz: React.FC<SignupQuizProps> = ({ userName, userId, onComplete, o
         {/* ナビゲーションボタン */}
         <div className="flex gap-2">
           {currentQuestionIndex > 0 && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              onClick={handlePrevious}
-              className="flex-1 bg-gray-100 text-gray-600 font-semibold py-3 px-4 rounded-xl hover:bg-gray-200 transition-all duration-300 flex items-center justify-center gap-2 text-sm"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              前の質問
-            </button>
+            <>
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onClick={handlePrevious}
+                className="flex-1 bg-gray-100 text-gray-600 font-semibold py-3 px-4 rounded-xl hover:bg-gray-200 transition-all duration-300 flex items-center justify-center gap-2 text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                前の質問
+              </motion.button>
+            </>
           )}
           
           <button
