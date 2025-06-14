@@ -41,7 +41,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
       setUserData(data);
       setEditName(data.name);
     } else {
-      setError('ユーザーデータが見つかりません');
+      // ユーザーデータが見つからない場合はログアウトして認証画面に遷移
+      console.log('ユーザーデータが見つかりません。ログアウトします。');
+      await signOut();
+      onClose();
     }
   };
 
