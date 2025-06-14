@@ -263,11 +263,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                   transition={{ delay: 0.5 }}
                   className="bg-blue-50 border border-blue-200 rounded-xl p-4"
                 >
-                  <h4 className="font-semibold text-blue-800 mb-2">📝 アカウント作成の流れ</h4>
-                  <p className="text-sm text-blue-700">
-                    「質問に回答」ボタンを押すと、15の質問に答える画面に移ります。
-                    すべての質問に回答完了後、アカウントが正式に作成されます。
-                  </p>
                 </motion.div>
               )}
 
