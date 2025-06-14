@@ -56,10 +56,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: existingUser } = await supabase
         .from('users')
         .select('email')
-        .eq('email', email)
-        .single();
+        .eq('email', email);
 
-      if (existingUser) {
+      if (existingUser && existingUser.length > 0) {
         return { error: new Error('このメールアドレスは既に使用されています') };
       }
 
