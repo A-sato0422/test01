@@ -4,58 +4,57 @@ import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import StartScreen from './components/StartScreen';
-import UserRegistration from './components/UserRegistration';
+import UserSelection from './components/UserSelection';
 import QuestionCard from './components/QuestionCard';
 import CompatibilityResult from './components/CompatibilityResult';
 import { questions } from './data/questions';
 import { calculateCompatibility } from './utils/compatibility';
 import { User, Question, Answer } from './types';
+import { supabase } from './lib/supabase';
 
-type AppState = 'start' | 'register1' | 'register2' | 'quiz1' | 'quiz2' | 'result';
+type AppState = 'start' | 'userSelection' | 'quiz1' | 'quiz2' | 'result';
 
 function AppContent() {
   const [state, setState] = useState<AppState>('start');
-  const [user1, setUser1] = useState<User | null>(null);
-  const [user2, setUser2] = useState<User | null>(null);
+  const [selectedUser1, setSelectedUser1] = useState<User | null>(null);
+  const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [user1Answers, setUser1Answers] = useState<Answer[]>([]);
   const [user2Answers, setUser2Answers] = useState<Answer[]>([]);
   const [compatibilityScore, setCompatibilityScore] = useState<number>(0);
 
   const handleStart = () => {
-    setState('register1');
+    setState('userSelection');
   };
 
-  const handleUser1Registration = (userData: { name: string; email: string }) => {
-    const newUser: User = {
-      id: '1',
-      name: userData.name,
-      email: userData.email,
-      created_at: new Date().toISOString()
-    };
-    setUser1(newUser);
-    setState('register2');
-  };
-
-  const handleUser2Registration = (userData: { name: string; email: string }) => {
-    const newUser: User = {
-      id: '2',
-      name: userData.name,
-      email: userData.email,
-      created_at: new Date().toISOString()
-    };
-    setUser2(newUser);
+  const handleUsersSelected = (user1: User, user2: User) => {
+    setSelectedUser1(user1);
+    setSelectedUser2(user2);
+    setCurrentQuestionIndex(0);
+    setUser1Answers([]);
+    setUser2Answers([]);
     setState('quiz1');
   };
 
-  const handleUser1Answer = (value: number) => {
+  const handleUser1Answer = async (value: number) => {
+    if (!selectedUser1) return;
+
     const answer: Answer = {
       id: currentQuestionIndex + 1,
-      user_id: '1',
+      user_id: selectedUser1.id,
       question_id: currentQuestionIndex + 1,
       answer_value: value,
       created_at: new Date().toISOString()
     };
+
+    // データベースに回答を保存
+    await supabase
+      .from('answers')
+      .upsert([{
+        user_id: selectedUser1.id,
+        question_id: currentQuestionIndex + 1,
+        answer_value: value
+      }]);
 
     const newAnswers = [...user1Answers, answer];
     setUser1Answers(newAnswers);
@@ -68,14 +67,25 @@ function AppContent() {
     }
   };
 
-  const handleUser2Answer = (value: number) => {
+  const handleUser2Answer = async (value: number) => {
+    if (!selectedUser2) return;
+
     const answer: Answer = {
       id: currentQuestionIndex + 1,
-      user_id: '2',
+      user_id: selectedUser2.id,
       question_id: currentQuestionIndex + 1,
       answer_value: value,
       created_at: new Date().toISOString()
     };
+
+    // データベースに回答を保存
+    await supabase
+      .from('answers')
+      .upsert([{
+        user_id: selectedUser2.id,
+        question_id: currentQuestionIndex + 1,
+        answer_value: value
+      }]);
 
     const newAnswers = [...user2Answers, answer];
     setUser2Answers(newAnswers);
@@ -86,14 +96,26 @@ function AppContent() {
       // 相性スコアを計算
       const score = calculateCompatibility(user1Answers, newAnswers);
       setCompatibilityScore(score);
+
+      // 相性結果をデータベースに保存
+      if (selectedUser1 && selectedUser2) {
+        await supabase
+          .from('compatibility_results')
+          .upsert([{
+            user1_id: selectedUser1.id,
+            user2_id: selectedUser2.id,
+            compatibility_score: score
+          }]);
+      }
+
       setState('result');
     }
   };
 
   const handleRestart = () => {
     setState('start');
-    setUser1(null);
-    setUser2(null);
+    setSelectedUser1(null);
+    setSelectedUser2(null);
     setCurrentQuestionIndex(0);
     setUser1Answers([]);
     setUser2Answers([]);
@@ -119,35 +141,18 @@ function AppContent() {
             </motion.div>
           )}
 
-          {state === 'register1' && (
+          {state === 'userSelection' && (
             <motion.div
-              key="register1"
+              key="userSelection"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.5 }}
             >
               <ProtectedRoute>
-                <UserRegistration
-                  userNumber={1}
-                  onUserRegistered={handleUser1Registration}
-                />
-              </ProtectedRoute>
-            </motion.div>
-          )}
-
-          {state === 'register2' && (
-            <motion.div
-              key="register2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.5 }}
-            >
-              <ProtectedRoute>
-                <UserRegistration
-                  userNumber={2}
-                  onUserRegistered={handleUser2Registration}
+                <UserSelection
+                  onUsersSelected={handleUsersSelected}
+                  currentUser={selectedUser1!}
                 />
               </ProtectedRoute>
             </motion.div>
@@ -167,7 +172,7 @@ function AppContent() {
                   questionNumber={currentQuestionIndex + 1}
                   totalQuestions={questions.length}
                   onAnswer={handleUser1Answer}
-                  userName={user1?.name || 'ユーザー1'}
+                  userName={selectedUser1?.name || 'ユーザー1'}
                 />
               </ProtectedRoute>
             </motion.div>
@@ -187,7 +192,7 @@ function AppContent() {
                   questionNumber={currentQuestionIndex + 1}
                   totalQuestions={questions.length}
                   onAnswer={handleUser2Answer}
-                  userName={user2?.name || 'ユーザー2'}
+                  userName={selectedUser2?.name || 'ユーザー2'}
                 />
               </ProtectedRoute>
             </motion.div>
@@ -203,8 +208,8 @@ function AppContent() {
             >
               <ProtectedRoute>
                 <CompatibilityResult
-                  user1Name={user1?.name || 'ユーザー1'}
-                  user2Name={user2?.name || 'ユーザー2'}
+                  user1Name={selectedUser1?.name || 'ユーザー1'}
+                  user2Name={selectedUser2?.name || 'ユーザー2'}
                   compatibilityScore={compatibilityScore}
                   onRestart={handleRestart}
                 />
