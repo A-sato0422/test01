@@ -30,11 +30,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
       .from('users')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+
+    if (error) {
+      setError('ユーザーデータの取得に失敗しました');
+      return;
+    }
 
     if (data) {
       setUserData(data);
       setEditName(data.name);
+    } else {
+      setError('ユーザーデータが見つかりません');
     }
   };
 
