@@ -73,14 +73,9 @@ const SignupQuiz: React.FC<SignupQuizProps> = ({ userName, userId, onComplete, o
           <h2 className="text-xl font-bold text-gray-800 mb-2">
             プロフィール設定
           </h2>
-          <p className="text-sm text-gray-600 mb-3">
+          <p className="text-sm text-gray-600">
             {userName}さん、質問に答えてプロフィールを完成させましょう
           </p>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-            <p className="text-xs text-yellow-700">
-              ⚠️ すべての質問に回答完了後、アカウントが作成されます
-            </p>
-          </div>
         </div>
 
         {/* プログレスバー */}
@@ -163,7 +158,7 @@ const SignupQuiz: React.FC<SignupQuizProps> = ({ userName, userId, onComplete, o
             >
               <ArrowLeft className="w-4 h-4" />
               前の質問
-            </motion.button>
+            </button>
           )}
           
           <button
