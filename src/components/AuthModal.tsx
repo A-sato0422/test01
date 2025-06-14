@@ -284,7 +284,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
               ) : (
                 mode === 'signup' ? 'アカウント作成' : 'ログイン'
               )}
-            </button>
+            </motion.button>
           </form>
 
           <div className="mt-6 text-center">
