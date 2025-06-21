@@ -153,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user data for:', userId);
       
-      // ユーザーデータ取得にもタイムアウトを設定
+      // ユーザーデータ取得にもタイムアウトを設定（30秒に延長）
       const fetchPromise = supabase
         .from('users')
         .select('*')
@@ -161,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('ユーザーデータの取得がタイムアウトしました')), 8000);
+        setTimeout(() => reject(new Error('ユーザーデータの取得がタイムアウトしました')), 30000);
       });
 
       const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
@@ -187,14 +187,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             created_at: authUser.created_at || new Date().toISOString()
           };
           
-          // usersテーブルに挿入を試行（タイムアウト付き）
+          // usersテーブルに挿入を試行（タイムアウトを15秒に延長）
           try {
             const insertPromise = supabase
               .from('users')
               .insert([fallbackUserData]);
 
             const insertTimeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('ユーザーデータの作成がタイムアウトしました')), 5000);
+              setTimeout(() => reject(new Error('ユーザーデータの作成がタイムアウトしました')), 15000);
             });
 
             await Promise.race([insertPromise, insertTimeoutPromise]);
