@@ -10,6 +10,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   completeSignupQuiz: (tempUserId: string, email: string, password: string, name: string, answers: any[]) => Promise<{ error: any }>;
+  updateUserProfile: (name: string) => Promise<{ error: any }>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,6 +48,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const refreshUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      setSession(session);
+      setUser(session.user);
+    }
+  };
+
+  const updateUserProfile = async (name: string) => {
+    if (!user) {
+      return { error: new Error('ユーザーが認証されていません') };
+    }
+
+    try {
+      // usersテーブルを更新
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ name: name.trim() })
+        .eq('id', user.id);
+
+      if (updateError) {
+        return { error: updateError };
+      }
+
+      // Supabase Authのuser_metadataも更新
+      const { error: authUpdateError } = await supabase.auth.updateUser({
+        data: { name: name.trim() }
+      });
+
+      if (authUpdateError) {
+        console.warn('Auth metadata update failed:', authUpdateError);
+        // usersテーブルの更新は成功しているので、エラーとしては扱わない
+      }
+
+      // ユーザー情報を再取得
+      await refreshUser();
+
+      return { error: null };
+    } catch (err) {
+      return { error: err };
+    }
+  };
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
@@ -149,6 +194,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     completeSignupQuiz,
+    updateUserProfile,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

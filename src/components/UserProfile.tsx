@@ -10,7 +10,7 @@ interface UserProfileProps {
 }
 
 const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateUserProfile } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
@@ -54,16 +54,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
     setLoading(true);
     setError('');
 
-    const { error } = await supabase
-      .from('users')
-      .update({ name: editName.trim() })
-      .eq('id', user.id);
+    const { error } = await updateUserProfile(editName.trim());
 
     if (error) {
-      setError('プロフィールの更新に失敗しました');
+      setError('プロフィールの更新に失敗しました: ' + error.message);
     } else {
+      // 成功した場合、ローカルの状態も更新
       setUserData({ ...userData, name: editName.trim() });
       setIsEditing(false);
+      // ユーザーデータを再取得して最新の状態を確保
+      await fetchUserData();
     }
 
     setLoading(false);
@@ -71,6 +71,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
 
   const handleSignOut = async () => {
     await signOut();
+    onClose();
+  };
+
+  const handleClose = () => {
+    // 編集中の場合は元の値に戻す
+    if (isEditing && userData) {
+      setEditName(userData.name);
+      setIsEditing(false);
+    }
+    setError('');
     onClose();
   };
 
@@ -82,7 +92,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -93,7 +103,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
         >
           <X className="w-5 h-5 text-gray-500" />
@@ -132,7 +142,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
                   disabled={loading || !editName.trim()}
                   className="px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50"
                 >
-                  <Save className="w-5 h-5" />
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
                 </button>
                 <button
                   onClick={() => {
