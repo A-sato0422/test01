@@ -35,19 +35,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
+    let timeoutId: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
+        // 10秒のタイムアウトを設定
+        timeoutId = setTimeout(() => {
+          if (mounted && loading) {
+            console.warn('認証の初期化がタイムアウトしました。ログアウトします。');
+            handleAuthTimeout();
+          }
+        }, 10000);
+
         // 現在のセッションを取得
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
           if (mounted) {
-            setSession(null);
-            setUser(null);
-            setUserData(null);
-            setLoading(false);
+            await handleAuthError();
           }
           return;
         }
@@ -62,15 +68,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (mounted) {
           setLoading(false);
         }
+
+        // タイムアウトをクリア
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       } catch (err) {
         console.error('Error initializing auth:', err);
         if (mounted) {
-          setSession(null);
-          setUser(null);
-          setUserData(null);
-          setLoading(false);
+          await handleAuthError();
         }
       }
+    };
+
+    const handleAuthTimeout = async () => {
+      console.log('認証タイムアウト: 自動ログアウトを実行');
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error('Error during timeout logout:', err);
+      }
+      
+      setSession(null);
+      setUser(null);
+      setUserData(null);
+      setLoading(false);
+    };
+
+    const handleAuthError = async () => {
+      console.log('認証エラー: 自動ログアウトを実行');
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error('Error during error logout:', err);
+      }
+      
+      setSession(null);
+      setUser(null);
+      setUserData(null);
+      setLoading(false);
     };
 
     initializeAuth();
@@ -83,11 +119,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (!mounted) return;
 
+      // タイムアウトをクリア
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        await fetchUserData(session.user.id);
+        try {
+          await fetchUserData(session.user.id);
+        } catch (err) {
+          console.error('Error fetching user data on auth change:', err);
+          await handleAuthError();
+        }
       } else {
         setUserData(null);
         setLoading(false);
@@ -96,6 +142,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       subscription.unsubscribe();
     };
   }, []);
@@ -104,31 +153,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user data for:', userId);
       
-      const { data, error } = await supabase
+      // ユーザーデータ取得にもタイムアウトを設定
+      const fetchPromise = supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
 
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('ユーザーデータの取得がタイムアウトしました')), 8000);
+      });
+
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
       if (error) {
         console.error('Error fetching user data:', error);
-        // エラーが発生した場合でも、認証ユーザーの情報から基本データを作成
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          const fallbackUserData: User = {
-            id: authUser.id,
-            name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'ユーザー',
-            email: authUser.email || '',
-            role: 'user',
-            created_at: authUser.created_at || new Date().toISOString()
-          };
-          
-          console.log('Using fallback user data:', fallbackUserData);
-          setUserData(fallbackUserData);
-        } else {
-          setUserData(null);
-        }
-      } else if (data) {
+        throw error;
+      }
+
+      if (data) {
         console.log('User data fetched successfully:', data);
         setUserData(data);
       } else {
@@ -144,25 +187,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             created_at: authUser.created_at || new Date().toISOString()
           };
           
-          // usersテーブルに挿入を試行
-          const { error: insertError } = await supabase
-            .from('users')
-            .insert([fallbackUserData]);
+          // usersテーブルに挿入を試行（タイムアウト付き）
+          try {
+            const insertPromise = supabase
+              .from('users')
+              .insert([fallbackUserData]);
 
-          if (insertError) {
-            console.error('Error creating user data:', insertError);
-          } else {
+            const insertTimeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('ユーザーデータの作成がタイムアウトしました')), 5000);
+            });
+
+            await Promise.race([insertPromise, insertTimeoutPromise]);
             console.log('User data created successfully');
+          } catch (insertError) {
+            console.error('Error creating user data:', insertError);
+            // 挿入に失敗してもfallbackデータを使用
           }
           
           setUserData(fallbackUserData);
         } else {
-          setUserData(null);
+          throw new Error('認証ユーザー情報が取得できません');
         }
       }
     } catch (err) {
-      console.error('Unexpected error fetching user data:', err);
-      // エラーが発生した場合でも、認証ユーザーの情報から基本データを作成
+      console.error('Error in fetchUserData:', err);
+      
+      // エラーが発生した場合、認証ユーザーの情報から基本データを作成を試行
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (authUser) {
@@ -174,12 +224,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             created_at: authUser.created_at || new Date().toISOString()
           };
           setUserData(fallbackUserData);
+          console.log('Using fallback user data due to error:', fallbackUserData);
         } else {
-          setUserData(null);
+          throw new Error('フォールバックユーザーデータの作成に失敗');
         }
       } catch (fallbackErr) {
         console.error('Fallback user data creation failed:', fallbackErr);
-        setUserData(null);
+        // 完全に失敗した場合はログアウト
+        await signOut();
+        throw fallbackErr;
       }
     } finally {
       setLoading(false);
@@ -187,11 +240,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      setSession(session);
-      setUser(session.user);
-      await fetchUserData(session.user.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setSession(session);
+        setUser(session.user);
+        await fetchUserData(session.user.id);
+      }
+    } catch (err) {
+      console.error('Error refreshing user:', err);
+      await signOut();
     }
   };
 
@@ -322,8 +380,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error during sign out:', err);
+    }
     setUserData(null);
+    setSession(null);
+    setUser(null);
+    setLoading(false);
   };
 
   const isAdmin = () => {
