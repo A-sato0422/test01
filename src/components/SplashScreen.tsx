@@ -74,8 +74,8 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           transition={{ delay: 0.5, duration: 0.8 }}
         >
           <HandWrittenTitle 
-            title="相性診断" 
-            subtitle="あなたとお相手の運命の相性をチェック"
+            title="Mnk-26" 
+            subtitle="May this year be a good one."
           />
         </motion.div>
 
