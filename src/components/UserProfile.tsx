@@ -26,25 +26,48 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
   const fetchUserData = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    if (error) {
-      setError('ユーザーデータの取得に失敗しました');
-      return;
-    }
+      if (error) {
+        console.error('Error fetching user data:', error);
+        setError('ユーザーデータの取得に失敗しました');
+        return;
+      }
 
-    if (data) {
-      setUserData(data);
-      setEditName(data.name);
-    } else {
-      // ユーザーデータが見つからない場合はログアウトして認証画面に遷移
-      console.log('ユーザーデータが見つかりません。ログアウトします。');
-      await signOut();
-      onClose();
+      if (data) {
+        setUserData(data);
+        setEditName(data.name);
+      } else {
+        // ユーザーデータが見つからない場合は、認証情報から作成
+        console.log('ユーザーデータが見つかりません。認証情報から作成します。');
+        const fallbackUserData = {
+          id: user.id,
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'ユーザー',
+          email: user.email || '',
+          created_at: user.created_at || new Date().toISOString()
+        };
+        
+        // usersテーブルに挿入を試行
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([fallbackUserData]);
+
+        if (insertError) {
+          console.error('Error creating user data:', insertError);
+          setError('ユーザーデータの作成に失敗しました');
+        } else {
+          setUserData(fallbackUserData);
+          setEditName(fallbackUserData.name);
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('予期しないエラーが発生しました');
     }
   };
 
@@ -54,19 +77,23 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
     setLoading(true);
     setError('');
 
-    const { error } = await updateUserProfile(editName.trim());
+    try {
+      const { error } = await updateUserProfile(editName.trim());
 
-    if (error) {
-      setError('プロフィールの更新に失敗しました: ' + error.message);
-    } else {
-      // 成功した場合、ローカルの状態も更新
-      setUserData({ ...userData, name: editName.trim() });
-      setIsEditing(false);
-      // ユーザーデータを再取得して最新の状態を確保
-      await fetchUserData();
+      if (error) {
+        setError('プロフィールの更新に失敗しました: ' + error.message);
+      } else {
+        // 成功した場合、ローカルの状態を更新
+        const updatedUserData = { ...userData, name: editName.trim() };
+        setUserData(updatedUserData);
+        setIsEditing(false);
+        setError('');
+      }
+    } catch (err) {
+      setError('予期しないエラーが発生しました');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleSignOut = async () => {
@@ -84,7 +111,40 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  if (!isOpen || !user || !userData) return null;
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditName(userData?.name || '');
+    setError('');
+  };
+
+  if (!isOpen || !user) return null;
+
+  // ユーザーデータの読み込み中
+  if (!userData) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+        onClick={handleClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="bg-white rounded-3xl p-8 shadow-2xl max-w-md w-full relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">プロフィールを読み込み中...</p>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -136,11 +196,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
                   onChange={(e) => setEditName(e.target.value)}
                   className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                   placeholder="お名前を入力"
+                  disabled={loading}
                 />
                 <button
                   onClick={handleUpdateProfile}
-                  disabled={loading || !editName.trim()}
-                  className="px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50"
+                  disabled={loading || !editName.trim() || editName.trim() === userData.name}
+                  className="px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -149,12 +210,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
                   )}
                 </button>
                 <button
-                  onClick={() => {
-                    setIsEditing(false);
-                    setEditName(userData.name);
-                    setError('');
-                  }}
-                  className="px-4 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors"
+                  onClick={handleCancelEdit}
+                  disabled={loading}
+                  className="px-4 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors disabled:opacity-50"
                 >
                   <X className="w-5 h-5" />
                 </button>
