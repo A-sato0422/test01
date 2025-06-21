@@ -24,25 +24,25 @@ function HandWrittenTitle({
     };
 
     return (
-        <div className="relative w-full max-w-4xl mx-auto py-24">
+        <div className="relative w-full max-w-6xl mx-auto py-32">
             <div className="absolute inset-0">
                 <motion.svg
                     width="100%"
                     height="100%"
-                    viewBox="0 0 1200 600"
+                    viewBox="0 0 1400 700"
                     initial="hidden"
                     animate="visible"
                     className="w-full h-full"
                 >
                     <title>相性診断</title>
                     <motion.path
-                        d="M 950 90 
-                           C 1250 300, 1050 480, 600 520
-                           C 250 520, 150 480, 150 300
-                           C 150 120, 350 80, 600 80
-                           C 850 80, 950 180, 950 180"
+                        d="M 1100 120 
+                           C 1450 350, 1200 550, 700 600
+                           C 250 600, 100 550, 100 350
+                           C 100 150, 400 100, 700 100
+                           C 1000 100, 1100 220, 1100 220"
                         fill="none"
-                        strokeWidth="12"
+                        strokeWidth="14"
                         stroke="currentColor"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -51,9 +51,9 @@ function HandWrittenTitle({
                     />
                 </motion.svg>
             </div>
-            <div className="relative text-center z-10 flex flex-col items-center justify-center">
+            <div className="relative text-center z-10 flex flex-col items-center justify-center px-8">
                 <motion.h1
-                    className="text-4xl md:text-6xl text-gray-800 tracking-tighter flex items-center gap-2 font-bold"
+                    className="text-5xl md:text-7xl text-gray-800 tracking-tighter flex items-center gap-2 font-bold mb-4"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, duration: 0.8 }}
@@ -62,7 +62,7 @@ function HandWrittenTitle({
                 </motion.h1>
                 {subtitle && (
                     <motion.p
-                        className="text-xl text-gray-600 mt-4"
+                        className="text-xl md:text-2xl text-gray-600"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 1, duration: 0.8 }}
