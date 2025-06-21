@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, LogIn, Heart, Settings } from 'lucide-react';
+import { User, LogIn, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from './AuthModal';
 import UserProfile from './UserProfile';
 
 interface HeaderProps {
   onHomeClick?: () => void;
-  onUserManagementClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onHomeClick, onUserManagementClick }) => {
-  const { user, userData, loading, isAdmin } = useAuth();
+const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
+  const { user, loading } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -29,12 +28,6 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick, onUserManagementClick }) =
   const handleLogoClick = () => {
     if (onHomeClick) {
       onHomeClick();
-    }
-  };
-
-  const handleUserManagementClick = () => {
-    if (onUserManagementClick) {
-      onUserManagementClick();
     }
   };
 
@@ -74,34 +67,14 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick, onUserManagementClick }) =
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3"
             >
-              {user && userData ? (
-                <div className="flex items-center gap-3">
-                  {/* 管理者の場合のみユーザー管理ボタンを表示 */}
-                  {isAdmin() && (
-                    <button
-                      onClick={handleUserManagementClick}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-full hover:shadow-lg transition-all duration-300"
-                    >
-                      <Settings className="w-4 h-4" />
-                      <span className="text-sm font-medium">ユーザー管理</span>
-                    </button>
-                  )}
-                  
-                  <button
-                    onClick={() => setProfileModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-500 text-white rounded-full hover:shadow-lg transition-all duration-300"
-                  >
-                    <User className="w-4 h-4" />
-                    <span className="text-sm font-medium">
-                      {userData.name}
-                      {isAdmin() && (
-                        <span className="ml-1 text-xs bg-white/20 px-2 py-0.5 rounded-full">
-                          管理者
-                        </span>
-                      )}
-                    </span>
-                  </button>
-                </div>
+              {user ? (
+                <button
+                  onClick={() => setProfileModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-500 text-white rounded-full hover:shadow-lg transition-all duration-300"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="text-sm font-medium">プロフィール</span>
+                </button>
               ) : (
                 <div className="flex items-center gap-2">
                   <button

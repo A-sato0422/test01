@@ -1,11 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { User } from '../types';
 
 interface AuthContextType {
-  user: SupabaseUser | null;
-  userData: User | null;
+  user: User | null;
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string, name: string) => Promise<{ error: any; needsQuiz?: boolean; tempUserId?: string }>;
@@ -14,7 +12,6 @@ interface AuthContextType {
   completeSignupQuiz: (tempUserId: string, email: string, password: string, name: string, answers: any[]) => Promise<{ error: any }>;
   updateUserProfile: (name: string) => Promise<{ error: any }>;
   refreshUser: () => Promise<void>;
-  isAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,228 +25,35 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [userData, setUserData] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-    let timeoutId: NodeJS.Timeout;
-
-    const initializeAuth = async () => {
-      try {
-        // 15秒のタイムアウトを設定（延長）
-        timeoutId = setTimeout(() => {
-          if (mounted && loading) {
-            console.warn('認証の初期化がタイムアウトしました。ログアウトします。');
-            handleAuthTimeout();
-          }
-        }, 15000);
-
-        // 現在のセッションを取得
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          if (mounted) {
-            await handleAuthError();
-          }
-          return;
-        }
-
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-        }
-
-        if (session?.user && mounted) {
-          await fetchUserData(session.user.id);
-        } else if (mounted) {
-          setLoading(false);
-        }
-
-        // タイムアウトをクリア
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-      } catch (err) {
-        console.error('Error initializing auth:', err);
-        if (mounted) {
-          await handleAuthError();
-        }
-      }
-    };
-
-    const handleAuthTimeout = async () => {
-      console.log('認証タイムアウト: 自動ログアウトを実行');
-      try {
-        await supabase.auth.signOut();
-      } catch (err) {
-        console.error('Error during timeout logout:', err);
-      }
-      
-      setSession(null);
-      setUser(null);
-      setUserData(null);
+    // 現在のセッションを取得
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
       setLoading(false);
-    };
-
-    const handleAuthError = async () => {
-      console.log('認証エラー: 自動ログアウトを実行');
-      try {
-        await supabase.auth.signOut();
-      } catch (err) {
-        console.error('Error during error logout:', err);
-      }
-      
-      setSession(null);
-      setUser(null);
-      setUserData(null);
-      setLoading(false);
-    };
-
-    initializeAuth();
+    });
 
     // 認証状態の変更を監視
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
-      
-      if (!mounted) return;
-
-      // タイムアウトをクリア
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        try {
-          await fetchUserData(session.user.id);
-        } catch (err) {
-          console.error('Error fetching user data on auth change:', err);
-          await handleAuthError();
-        }
-      } else {
-        setUserData(null);
-        setLoading(false);
-      }
+      setLoading(false);
     });
 
-    return () => {
-      mounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserData = async (userId: string) => {
-    try {
-      console.log('Fetching user data for:', userId);
-      
-      // ユーザーデータ取得のタイムアウトを60秒に延長
-      const fetchPromise = supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('ユーザーデータの取得がタイムアウトしました')), 60000);
-      });
-
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
-
-      if (error) {
-        console.error('Error fetching user data:', error);
-        throw error;
-      }
-
-      if (data) {
-        console.log('User data fetched successfully:', data);
-        setUserData(data);
-      } else {
-        console.log('No user data found, creating fallback');
-        // ユーザーデータが見つからない場合、認証情報から作成
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          const fallbackUserData: User = {
-            id: authUser.id,
-            name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'ユーザー',
-            email: authUser.email || '',
-            role: 'user',
-            created_at: authUser.created_at || new Date().toISOString()
-          };
-          
-          // usersテーブルに挿入を試行（タイムアウトを30秒に延長）
-          try {
-            const insertPromise = supabase
-              .from('users')
-              .insert([fallbackUserData]);
-
-            const insertTimeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('ユーザーデータの作成がタイムアウトしました')), 30000);
-            });
-
-            await Promise.race([insertPromise, insertTimeoutPromise]);
-            console.log('User data created successfully');
-          } catch (insertError) {
-            console.error('Error creating user data:', insertError);
-            // 挿入に失敗してもfallbackデータを使用
-          }
-          
-          setUserData(fallbackUserData);
-        } else {
-          throw new Error('認証ユーザー情報が取得できません');
-        }
-      }
-    } catch (err) {
-      console.error('Error in fetchUserData:', err);
-      
-      // エラーが発生した場合、認証ユーザーの情報から基本データを作成を試行
-      try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          const fallbackUserData: User = {
-            id: authUser.id,
-            name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'ユーザー',
-            email: authUser.email || '',
-            role: 'user',
-            created_at: authUser.created_at || new Date().toISOString()
-          };
-          setUserData(fallbackUserData);
-          console.log('Using fallback user data due to error:', fallbackUserData);
-        } else {
-          throw new Error('フォールバックユーザーデータの作成に失敗');
-        }
-      } catch (fallbackErr) {
-        console.error('Fallback user data creation failed:', fallbackErr);
-        // 完全に失敗した場合はログアウト
-        await signOut();
-        throw fallbackErr;
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const refreshUser = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-        await fetchUserData(session.user.id);
-      }
-    } catch (err) {
-      console.error('Error refreshing user:', err);
-      await signOut();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      setSession(session);
+      setUser(session.user);
     }
   };
 
@@ -317,7 +121,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: data.user.id,
             name: name,
             email: email,
-            role: 'user', // デフォルトは一般ユーザー
           },
         ]);
 
@@ -380,24 +183,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.error('Error during sign out:', err);
-    }
-    setUserData(null);
-    setSession(null);
-    setUser(null);
-    setLoading(false);
-  };
-
-  const isAdmin = () => {
-    return userData?.role === 'admin';
+    await supabase.auth.signOut();
   };
 
   const value = {
     user,
-    userData,
     session,
     loading,
     signUp,
@@ -406,7 +196,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     completeSignupQuiz,
     updateUserProfile,
     refreshUser,
-    isAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
