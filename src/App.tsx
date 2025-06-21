@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/Header';
@@ -7,21 +7,26 @@ import StartScreen from './components/StartScreen';
 import UserSelection from './components/UserSelection';
 import QuestionCard from './components/QuestionCard';
 import CompatibilityResult from './components/CompatibilityResult';
+import SplashScreen from './components/SplashScreen';
 import { questions } from './data/questions';
 import { calculateCompatibility } from './utils/compatibility';
 import { User, Question, Answer } from './types';
 import { supabase } from './lib/supabase';
 
-type AppState = 'start' | 'userSelection' | 'quiz1' | 'quiz2' | 'result';
+type AppState = 'splash' | 'start' | 'userSelection' | 'quiz1' | 'quiz2' | 'result';
 
 function AppContent() {
-  const [state, setState] = useState<AppState>('start');
+  const [state, setState] = useState<AppState>('splash');
   const [selectedUser1, setSelectedUser1] = useState<User | null>(null);
   const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [user1Answers, setUser1Answers] = useState<Answer[]>([]);
   const [user2Answers, setUser2Answers] = useState<Answer[]>([]);
   const [compatibilityScore, setCompatibilityScore] = useState<number>(0);
+
+  const handleSplashComplete = () => {
+    setState('start');
+  };
 
   const handleStart = () => {
     setState('userSelection');
@@ -207,100 +212,116 @@ function AppContent() {
 
   return (
     <div className="app">
-      <Header onHomeClick={handleHomeClick} />
-      <div className="pt-16">
-        <AnimatePresence mode="wait">
-          {state === 'start' && (
-            <motion.div
-              key="start"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <ProtectedRoute message="相性診断を始めるにはログインが必要です">
-                <StartScreen onStart={handleStart} />
-              </ProtectedRoute>
-            </motion.div>
-          )}
+      <AnimatePresence mode="wait">
+        {state === 'splash' && (
+          <motion.div
+            key="splash"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <SplashScreen onComplete={handleSplashComplete} />
+          </motion.div>
+        )}
 
-          {state === 'userSelection' && (
-            <motion.div
-              key="userSelection"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.5 }}
-            >
-              <ProtectedRoute>
-                <UserSelection
-                  onUsersSelected={handleUsersSelected}
-                  currentUser={selectedUser1!}
-                />
-              </ProtectedRoute>
-            </motion.div>
-          )}
+        {state !== 'splash' && (
+          <>
+            <Header onHomeClick={handleHomeClick} />
+            <div className="pt-16">
+              {state === 'start' && (
+                <motion.div
+                  key="start"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <ProtectedRoute message="相性診断を始めるにはログインが必要です">
+                    <StartScreen onStart={handleStart} />
+                  </ProtectedRoute>
+                </motion.div>
+              )}
 
-          {state === 'quiz1' && (
-            <motion.div
-              key="quiz1"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-            >
-              <ProtectedRoute>
-                <QuestionCard
-                  question={questions[currentQuestionIndex]}
-                  questionNumber={currentQuestionIndex + 1}
-                  totalQuestions={questions.length}
-                  onAnswer={handleUser1Answer}
-                  userName={selectedUser1?.name || 'ユーザー1'}
-                />
-              </ProtectedRoute>
-            </motion.div>
-          )}
+              {state === 'userSelection' && (
+                <motion.div
+                  key="userSelection"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <ProtectedRoute>
+                    <UserSelection
+                      onUsersSelected={handleUsersSelected}
+                      currentUser={selectedUser1!}
+                    />
+                  </ProtectedRoute>
+                </motion.div>
+              )}
 
-          {state === 'quiz2' && (
-            <motion.div
-              key="quiz2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-            >
-              <ProtectedRoute>
-                <QuestionCard
-                  question={questions[currentQuestionIndex]}
-                  questionNumber={currentQuestionIndex + 1}
-                  totalQuestions={questions.length}
-                  onAnswer={handleUser2Answer}
-                  userName={selectedUser2?.name || 'ユーザー2'}
-                />
-              </ProtectedRoute>
-            </motion.div>
-          )}
+              {state === 'quiz1' && (
+                <motion.div
+                  key="quiz1"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <ProtectedRoute>
+                    <QuestionCard
+                      question={questions[currentQuestionIndex]}
+                      questionNumber={currentQuestionIndex + 1}
+                      totalQuestions={questions.length}
+                      onAnswer={handleUser1Answer}
+                      userName={selectedUser1?.name || 'ユーザー1'}
+                    />
+                  </ProtectedRoute>
+                </motion.div>
+              )}
 
-          {state === 'result' && (
-            <motion.div
-              key="result"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.5 }}
-            >
-              <ProtectedRoute>
-                <CompatibilityResult
-                  user1Name={selectedUser1?.name || 'ユーザー1'}
-                  user2Name={selectedUser2?.name || 'ユーザー2'}
-                  compatibilityScore={compatibilityScore}
-                  onRestart={handleRestart}
-                />
-              </ProtectedRoute>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+              {state === 'quiz2' && (
+                <motion.div
+                  key="quiz2"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <ProtectedRoute>
+                    <QuestionCard
+                      question={questions[currentQuestionIndex]}
+                      questionNumber={currentQuestionIndex + 1}
+                      totalQuestions={questions.length}
+                      onAnswer={handleUser2Answer}
+                      userName={selectedUser2?.name || 'ユーザー2'}
+                    />
+                  </ProtectedRoute>
+                </motion.div>
+              )}
+
+              {state === 'result' && (
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <ProtectedRoute>
+                    <CompatibilityResult
+                      user1Name={selectedUser1?.name || 'ユーザー1'}
+                      user2Name={selectedUser2?.name || 'ユーザー2'}
+                      compatibilityScore={compatibilityScore}
+                      onRestart={handleRestart}
+                    />
+                  </ProtectedRoute>
+                </motion.div>
+              )}
+            </div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
