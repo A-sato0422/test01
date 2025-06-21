@@ -34,23 +34,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 現在のセッションを取得
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserData(session.user.id);
-      } else {
-        setLoading(false);
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // 現在のセッションを取得
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          if (mounted) {
+            setSession(null);
+            setUser(null);
+            setUserData(null);
+            setLoading(false);
+          }
+          return;
+        }
+
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+
+        if (session?.user && mounted) {
+          await fetchUserData(session.user.id);
+        } else if (mounted) {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          setUserData(null);
+          setLoading(false);
+        }
       }
-    });
+    };
+
+    initializeAuth();
 
     // 認証状態の変更を監視
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      
+      if (!mounted) return;
+
       setSession(session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
         await fetchUserData(session.user.id);
       } else {
@@ -59,11 +94,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserData = async (userId: string) => {
     try {
+      console.log('Fetching user data for:', userId);
+      
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -72,15 +112,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Error fetching user data:', error);
-        setUserData(null);
+        // エラーが発生した場合でも、認証ユーザーの情報から基本データを作成
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          const fallbackUserData: User = {
+            id: authUser.id,
+            name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'ユーザー',
+            email: authUser.email || '',
+            role: 'user',
+            created_at: authUser.created_at || new Date().toISOString()
+          };
+          
+          console.log('Using fallback user data:', fallbackUserData);
+          setUserData(fallbackUserData);
+        } else {
+          setUserData(null);
+        }
       } else if (data) {
+        console.log('User data fetched successfully:', data);
         setUserData(data);
       } else {
-        setUserData(null);
+        console.log('No user data found, creating fallback');
+        // ユーザーデータが見つからない場合、認証情報から作成
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          const fallbackUserData: User = {
+            id: authUser.id,
+            name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'ユーザー',
+            email: authUser.email || '',
+            role: 'user',
+            created_at: authUser.created_at || new Date().toISOString()
+          };
+          
+          // usersテーブルに挿入を試行
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([fallbackUserData]);
+
+          if (insertError) {
+            console.error('Error creating user data:', insertError);
+          } else {
+            console.log('User data created successfully');
+          }
+          
+          setUserData(fallbackUserData);
+        } else {
+          setUserData(null);
+        }
       }
     } catch (err) {
       console.error('Unexpected error fetching user data:', err);
-      setUserData(null);
+      // エラーが発生した場合でも、認証ユーザーの情報から基本データを作成
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          const fallbackUserData: User = {
+            id: authUser.id,
+            name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'ユーザー',
+            email: authUser.email || '',
+            role: 'user',
+            created_at: authUser.created_at || new Date().toISOString()
+          };
+          setUserData(fallbackUserData);
+        } else {
+          setUserData(null);
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback user data creation failed:', fallbackErr);
+        setUserData(null);
+      }
     } finally {
       setLoading(false);
     }
