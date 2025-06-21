@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { User } from '../types';
 
 interface AuthContextType {
-  user: User | null;
+  user: SupabaseUser | null;
+  userData: User | null;
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string, name: string) => Promise<{ error: any; needsQuiz?: boolean; tempUserId?: string }>;
@@ -12,6 +14,7 @@ interface AuthContextType {
   completeSignupQuiz: (tempUserId: string, email: string, password: string, name: string, answers: any[]) => Promise<{ error: any }>;
   updateUserProfile: (name: string) => Promise<{ error: any }>;
   refreshUser: () => Promise<void>;
+  isAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,7 +28,8 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [userData, setUserData] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +38,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
+      if (session?.user) {
+        fetchUserData(session.user.id);
+      } else {
+        setLoading(false);
+      }
     });
 
     // 認証状態の変更を監視
@@ -43,17 +51,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
+      if (session?.user) {
+        await fetchUserData(session.user.id);
+      } else {
+        setUserData(null);
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserData = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching user data:', error);
+        setUserData(null);
+      } else if (data) {
+        setUserData(data);
+      } else {
+        setUserData(null);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching user data:', err);
+      setUserData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const refreshUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       setSession(session);
       setUser(session.user);
+      await fetchUserData(session.user.id);
     }
   };
 
@@ -121,6 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: data.user.id,
             name: name,
             email: email,
+            role: 'user', // デフォルトは一般ユーザー
           },
         ]);
 
@@ -184,10 +223,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setUserData(null);
+  };
+
+  const isAdmin = () => {
+    return userData?.role === 'admin';
   };
 
   const value = {
     user,
+    userData,
     session,
     loading,
     signUp,
@@ -196,6 +241,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     completeSignupQuiz,
     updateUserProfile,
     refreshUser,
+    isAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

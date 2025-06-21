@@ -7,12 +7,13 @@ import StartScreen from './components/StartScreen';
 import UserSelection from './components/UserSelection';
 import QuestionCard from './components/QuestionCard';
 import CompatibilityResult from './components/CompatibilityResult';
+import UserManagement from './components/UserManagement';
 import { questions } from './data/questions';
 import { calculateCompatibility } from './utils/compatibility';
 import { User, Question, Answer } from './types';
 import { supabase } from './lib/supabase';
 
-type AppState = 'start' | 'userSelection' | 'quiz1' | 'quiz2' | 'result';
+type AppState = 'start' | 'userSelection' | 'quiz1' | 'quiz2' | 'result' | 'userManagement';
 
 function AppContent() {
   const [state, setState] = useState<AppState>('start');
@@ -35,6 +36,14 @@ function AppContent() {
     setUser1Answers([]);
     setUser2Answers([]);
     setCompatibilityScore(0);
+  };
+
+  const handleUserManagementClick = () => {
+    setState('userManagement');
+  };
+
+  const handleBackFromUserManagement = () => {
+    setState('start');
   };
 
   const handleUsersSelected = async (user1: User, user2: User) => {
@@ -207,7 +216,10 @@ function AppContent() {
 
   return (
     <div className="app">
-      <Header onHomeClick={handleHomeClick} />
+      <Header 
+        onHomeClick={handleHomeClick} 
+        onUserManagementClick={handleUserManagementClick}
+      />
       <div className="pt-16">
         <AnimatePresence mode="wait">
           {state === 'start' && (
@@ -296,6 +308,20 @@ function AppContent() {
                   compatibilityScore={compatibilityScore}
                   onRestart={handleRestart}
                 />
+              </ProtectedRoute>
+            </motion.div>
+          )}
+
+          {state === 'userManagement' && (
+            <motion.div
+              key="userManagement"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.5 }}
+            >
+              <ProtectedRoute>
+                <UserManagement onBack={handleBackFromUserManagement} />
               </ProtectedRoute>
             </motion.div>
           )}
