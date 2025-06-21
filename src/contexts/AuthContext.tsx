@@ -39,13 +39,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initializeAuth = async () => {
       try {
-        // 10秒のタイムアウトを設定
+        // 15秒のタイムアウトを設定（延長）
         timeoutId = setTimeout(() => {
           if (mounted && loading) {
             console.warn('認証の初期化がタイムアウトしました。ログアウトします。');
             handleAuthTimeout();
           }
-        }, 10000);
+        }, 15000);
 
         // 現在のセッションを取得
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -153,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user data for:', userId);
       
-      // ユーザーデータ取得にもタイムアウトを設定（30秒に延長）
+      // ユーザーデータ取得のタイムアウトを60秒に延長
       const fetchPromise = supabase
         .from('users')
         .select('*')
@@ -161,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('ユーザーデータの取得がタイムアウトしました')), 30000);
+        setTimeout(() => reject(new Error('ユーザーデータの取得がタイムアウトしました')), 60000);
       });
 
       const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
@@ -187,14 +187,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             created_at: authUser.created_at || new Date().toISOString()
           };
           
-          // usersテーブルに挿入を試行（タイムアウトを15秒に延長）
+          // usersテーブルに挿入を試行（タイムアウトを30秒に延長）
           try {
             const insertPromise = supabase
               .from('users')
               .insert([fallbackUserData]);
 
             const insertTimeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('ユーザーデータの作成がタイムアウトしました')), 15000);
+              setTimeout(() => reject(new Error('ユーザーデータの作成がタイムアウトしました')), 30000);
             });
 
             await Promise.race([insertPromise, insertTimeoutPromise]);
