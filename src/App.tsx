@@ -27,6 +27,16 @@ function AppContent() {
     setState('userSelection');
   };
 
+  const handleHomeClick = () => {
+    setState('start');
+    setSelectedUser1(null);
+    setSelectedUser2(null);
+    setCurrentQuestionIndex(0);
+    setUser1Answers([]);
+    setUser2Answers([]);
+    setCompatibilityScore(0);
+  };
+
   const handleUsersSelected = async (user1: User, user2: User) => {
     setSelectedUser1(user1);
     setSelectedUser2(user2);
@@ -197,7 +207,7 @@ function AppContent() {
 
   return (
     <div className="app">
-      <Header />
+      <Header onHomeClick={handleHomeClick} />
       <div className="pt-16">
         <AnimatePresence mode="wait">
           {state === 'start' && (

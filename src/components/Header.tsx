@@ -5,7 +5,11 @@ import { useAuth } from '../contexts/AuthContext';
 import AuthModal from './AuthModal';
 import UserProfile from './UserProfile';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onHomeClick?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
   const { user, loading } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
@@ -19,6 +23,12 @@ const Header: React.FC = () => {
   const handleSignUpClick = () => {
     setAuthMode('signup');
     setAuthModalOpen(true);
+  };
+
+  const handleLogoClick = () => {
+    if (onHomeClick) {
+      onHomeClick();
+    }
   };
 
   if (loading) {
@@ -42,14 +52,15 @@ const Header: React.FC = () => {
       <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-b border-gray-200 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <motion.div
+            <motion.button
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center"
+              onClick={handleLogoClick}
+              className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
             >
               <Heart className="w-8 h-8 text-pink-400 mr-2" fill="currentColor" />
               <span className="text-xl font-bold text-gray-800">相性診断</span>
-            </motion.div>
+            </motion.button>
 
             <motion.div
               initial={{ opacity: 0, x: 20 }}
