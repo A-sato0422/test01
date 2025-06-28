@@ -74,7 +74,7 @@ function AppContent() {
           user1_id: user1.id,
           user2_id: user2.id,
           compatibility_score: score
-        }]);
+        }], { onConflict: 'user1_id,user2_id' });
 
       setState('result');
     } else if (hasAllAnswers1 && !hasAllAnswers2) {
@@ -144,7 +144,7 @@ function AppContent() {
             user1_id: selectedUser1.id,
             user2_id: selectedUser2!.id,
             compatibility_score: score
-          }]);
+          }], { onConflict: 'user1_id,user2_id' });
 
         setState('result');
       } else {
@@ -193,7 +193,7 @@ function AppContent() {
             user1_id: selectedUser1.id,
             user2_id: selectedUser2.id,
             compatibility_score: score
-          }]);
+          }], { onConflict: 'user1_id,user2_id' });
       }
 
       setState('result');
