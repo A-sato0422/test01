@@ -167,8 +167,8 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           transition={{ delay: 0.5, duration: 0.8 }}
         >
           <HandWrittenTitle 
-            title="Mnk-26" 
-            subtitle="May this year be a good one."
+            title="H.MNK" 
+            subtitle="Happy Birthday 26 years"
           />
         </motion.div>
 
