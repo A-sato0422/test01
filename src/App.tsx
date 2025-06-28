@@ -42,9 +42,25 @@ function AppContent() {
     setCompatibilityScore(0);
   };
 
+  // 特別なユーザー組み合わせをチェックする関数
+  const isSpecialUserCombination = (user1: User, user2: User): boolean => {
+    const specialNames = ['畑中美菜子', '阿知良憲'];
+    return (
+      (user1.name === specialNames[0] && user2.name === specialNames[1]) ||
+      (user1.name === specialNames[1] && user2.name === specialNames[0])
+    );
+  };
+
   const handleUsersSelected = async (user1: User, user2: User) => {
     setSelectedUser1(user1);
     setSelectedUser2(user2);
+    
+    // 特別なユーザー組み合わせの場合は直接結果画面へ
+    if (isSpecialUserCombination(user1, user2)) {
+      setCompatibilityScore(100);
+      setState('result');
+      return;
+    }
     
     // 既存の回答データを取得
     const [user1AnswersData, user2AnswersData] = await Promise.all([
@@ -314,6 +330,7 @@ function AppContent() {
                       user2Name={selectedUser2?.name || 'ユーザー2'}
                       compatibilityScore={compatibilityScore}
                       onRestart={handleRestart}
+                      isSpecialCouple={selectedUser1 && selectedUser2 ? isSpecialUserCombination(selectedUser1, selectedUser2) : false}
                     />
                   </ProtectedRoute>
                 </motion.div>
