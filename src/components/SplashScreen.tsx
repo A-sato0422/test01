@@ -20,14 +20,14 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100 flex items-center justify-center z-50">
       <div className="text-center max-w-7xl mx-auto px-4 relative">
-        {/* 楕円の周りに配置された星のアニメーション */}
+        {/* 楕円の境界線上に配置された星のアニメーション */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.8 }}
           className="relative"
         >
-          {/* 上部の星 */}
+          {/* 上部中央の星 (楕円の上端) */}
           <motion.div
             animate={{ 
               rotate: [0, 10, -10, 0],
@@ -39,12 +39,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 1
             }}
-            className="absolute top-32 left-1/2 transform -translate-x-1/2"
+            className="absolute top-20 left-1/2 transform -translate-x-1/2"
           >
-            <Sparkles className="w-8 h-8 text-yellow-400" />
+            <Sparkles className="w-6 h-6 text-yellow-400" />
           </motion.div>
           
-          {/* 上右の星 */}
+          {/* 右上の星 */}
           <motion.div
             animate={{ 
               rotate: [0, -15, 15, 0],
@@ -56,12 +56,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 1.2
             }}
-            className="absolute top-40 right-16 transform"
+            className="absolute top-32 right-20 transform"
           >
-            <Sparkles className="w-6 h-6 text-purple-400" />
+            <Sparkles className="w-5 h-5 text-purple-400" />
           </motion.div>
 
-          {/* 右側の星 */}
+          {/* 右側中央の星 (楕円の右端) */}
           <motion.div
             animate={{ 
               rotate: [0, 12, -12, 0],
@@ -73,12 +73,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 1.5
             }}
-            className="absolute top-1/2 right-8 transform translate-y-8"
+            className="absolute top-1/2 right-4 transform -translate-y-1/2"
           >
-            <Sparkles className="w-7 h-7 text-pink-400" />
+            <Sparkles className="w-6 h-6 text-pink-400" />
           </motion.div>
 
-          {/* 下右の星 */}
+          {/* 右下の星 */}
           <motion.div
             animate={{ 
               rotate: [0, -8, 8, 0],
@@ -90,12 +90,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 1.8
             }}
-            className="absolute bottom-8 right-16 transform"
+            className="absolute bottom-32 right-20 transform"
           >
             <Sparkles className="w-5 h-5 text-blue-400" />
           </motion.div>
 
-          {/* 下部の星 */}
+          {/* 下部中央の星 (楕円の下端) */}
           <motion.div
             animate={{ 
               rotate: [0, -10, 10, 0],
@@ -107,12 +107,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 2
             }}
-            className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+            className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
           >
             <Sparkles className="w-6 h-6 text-green-400" />
           </motion.div>
 
-          {/* 下左の星 */}
+          {/* 左下の星 */}
           <motion.div
             animate={{ 
               rotate: [0, 15, -15, 0],
@@ -124,12 +124,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 2.2
             }}
-            className="absolute bottom-8 left-16 transform"
+            className="absolute bottom-32 left-20 transform"
           >
-            <Sparkles className="w-7 h-7 text-orange-400" />
+            <Sparkles className="w-5 h-5 text-orange-400" />
           </motion.div>
 
-          {/* 左側の星 */}
+          {/* 左側中央の星 (楕円の左端) */}
           <motion.div
             animate={{ 
               rotate: [0, -12, 12, 0],
@@ -141,12 +141,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 2.5
             }}
-            className="absolute top-1/2 left-8 transform translate-y-8"
+            className="absolute top-1/2 left-4 transform -translate-y-1/2"
           >
             <Sparkles className="w-6 h-6 text-indigo-400" />
           </motion.div>
 
-          {/* 上左の星 */}
+          {/* 左上の星 */}
           <motion.div
             animate={{ 
               rotate: [0, 8, -8, 0],
@@ -158,7 +158,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 2.8
             }}
-            className="absolute top-40 left-16 transform"
+            className="absolute top-32 left-20 transform"
           >
             <Sparkles className="w-5 h-5 text-teal-400" />
           </motion.div>
