@@ -133,7 +133,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="bg-white rounded-3xl p-8 shadow-2xl relative my-4"
+            className="bg-white rounded-3xl p-6 shadow-2xl relative my-4"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -143,19 +143,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
               <X className="w-5 h-5 text-gray-500" />
             </button>
 
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-                className="inline-block p-4 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full mb-4"
+                className="inline-block p-3 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full mb-3"
               >
-                <User className="w-8 h-8 text-white" />
+                <User className="w-6 h-6 text-white" />
               </motion.div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">
                 {mode === 'signup' ? 'アカウント作成' : 'ログイン'}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-sm text-gray-600">
                 {mode === 'signup' 
                   ? '新しいアカウントを作成して相性診断を始めましょう' 
                   : 'アカウントにログインして相性診断を続けましょう'
@@ -163,14 +163,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {mode === 'signup' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     お名前
                   </label>
                   <div className="relative">
@@ -192,7 +192,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: mode === 'signup' ? 0.3 : 0.2 }}
               >
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   メールアドレス
                 </label>
                 <div className="relative">
@@ -213,7 +213,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: mode === 'signup' ? 0.4 : 0.3 }}
               >
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   パスワード
                 </label>
                 <div className="relative">
@@ -264,7 +264,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -277,7 +277,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
               </motion.button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
                 {mode === 'signup' ? 'すでにアカウントをお持ちですか？' : 'アカウントをお持ちでない方は'}
                 <button
@@ -287,6 +287,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                   {mode === 'signup' ? 'ログイン' : 'アカウント作成'}
                 </button>
               </p>
+            </div>
+
+            <div className="mt-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+              <h4 className="font-semibold text-gray-800 mb-2 text-sm">アカウント作成の特典</h4>
+              <ul className="text-xs text-gray-600 space-y-1 text-left">
+                <li>• 診断結果の保存・履歴確認</li>
+                <li>• 複数の相手との相性比較</li>
+                <li>• 詳細な分析レポート</li>
+                <li>• パーソナライズされた提案</li>
+              </ul>
             </div>
           </motion.div>
         </div>
