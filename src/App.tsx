@@ -24,6 +24,21 @@ function AppContent() {
   const [user2Answers, setUser2Answers] = useState<Answer[]>([]);
   const [compatibilityScore, setCompatibilityScore] = useState<number>(0);
 
+  // ページ最上部にスクロールする関数
+  const scrollToTop = () => {
+    // 複数の方法でスクロールを確実に実行
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // 追加の確実性のため、少し遅延してもう一度実行
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 100);
+  };
+
   const handleSplashComplete = () => {
     setState('start');
   };
@@ -58,7 +73,14 @@ function AppContent() {
     // 特別なユーザー組み合わせの場合は直接結果画面へ
     if (isSpecialUserCombination(user1, user2)) {
       setCompatibilityScore(100);
-      setState('result');
+      
+      // 結果画面に遷移する前にスクロールを最上部に移動
+      scrollToTop();
+      
+      // 少し遅延してから画面遷移（スクロールが完了してから）
+      setTimeout(() => {
+        setState('result');
+      }, 200);
       return;
     }
     
@@ -92,7 +114,13 @@ function AppContent() {
           compatibility_score: score
         }], { onConflict: 'user1_id,user2_id' });
 
-      setState('result');
+      // 結果画面に遷移する前にスクロールを最上部に移動
+      scrollToTop();
+      
+      // 少し遅延してから画面遷移（スクロールが完了してから）
+      setTimeout(() => {
+        setState('result');
+      }, 200);
     } else if (hasAllAnswers1 && !hasAllAnswers2) {
       // ユーザー1は回答済み、ユーザー2は未回答
       setUser1Answers(user1ExistingAnswers);
@@ -162,7 +190,13 @@ function AppContent() {
             compatibility_score: score
           }], { onConflict: 'user1_id,user2_id' });
 
-        setState('result');
+        // 結果画面に遷移する前にスクロールを最上部に移動
+        scrollToTop();
+        
+        // 少し遅延してから画面遷移（スクロールが完了してから）
+        setTimeout(() => {
+          setState('result');
+        }, 200);
       } else {
         // ユーザー2の質問に進む
         setCurrentQuestionIndex(user2ExistingAnswers?.length || 0);
@@ -212,7 +246,13 @@ function AppContent() {
           }], { onConflict: 'user1_id,user2_id' });
       }
 
-      setState('result');
+      // 結果画面に遷移する前にスクロールを最上部に移動
+      scrollToTop();
+      
+      // 少し遅延してから画面遷移（スクロールが完了してから）
+      setTimeout(() => {
+        setState('result');
+      }, 200);
     }
   };
 
@@ -225,6 +265,16 @@ function AppContent() {
     setUser2Answers([]);
     setCompatibilityScore(0);
   };
+
+  // 結果画面が表示された時にもスクロールを確実に実行
+  useEffect(() => {
+    if (state === 'result') {
+      // 画面遷移後に再度スクロールを実行
+      setTimeout(() => {
+        scrollToTop();
+      }, 100);
+    }
+  }, [state]);
 
   return (
     <div className="app">
