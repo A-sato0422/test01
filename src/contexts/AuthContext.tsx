@@ -212,6 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error.message?.includes('session_not_found') || 
             error.message?.includes('Session from session_id claim in JWT does not exist') ||
             error.message?.includes('Invalid session') ||
+            error.message?.includes('Auth session missing!') ||
             error.status === 403) {
           console.log('Session already invalidated or expired, user effectively logged out');
           return;
