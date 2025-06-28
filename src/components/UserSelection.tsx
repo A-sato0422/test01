@@ -242,7 +242,7 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
         >
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">
-              登録ユーザー覧 ({filteredUsers.length}人)
+              登録ユーザー一覧 ({filteredUsers.length}人)
             </h3>
             <div className="flex items-center gap-4 text-xs text-gray-500">
               <div className="flex items-center">
@@ -382,19 +382,6 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
           >
             {getDiagnosisButtonText()}
           </button>
-          
-          {selectedUser1 && selectedUser2 && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-              <p className="text-sm text-blue-700">
-                {selectedUser1.hasAnswers && selectedUser2.hasAnswers
-                  ? '💡 両方のユーザーが回答済みのため、すぐに結果を表示します'
-                  : selectedUser1.hasAnswers || selectedUser2.hasAnswers
-                  ? '📝 一方のユーザーが未回答のため、質問に答えてから結果を表示します'
-                  : '📝 両方のユーザーが未回答のため、順番に質問に答えてから結果を表示します'
-                }
-              </p>
-            </div>
-          )}
         </motion.div>
       </div>
     </div>
