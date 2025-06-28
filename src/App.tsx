@@ -237,7 +237,7 @@ function AppContent() {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <ProtectedRoute message="相性診断を始めるにはログインが必要です">
+                  <ProtectedRoute message="">
                     <StartScreen onStart={handleStart} />
                   </ProtectedRoute>
                 </motion.div>
