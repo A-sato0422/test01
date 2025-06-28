@@ -194,7 +194,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error: any) {
+      // セッションが既に無効化されている場合（session_not_found）は
+      // 実質的にログアウト済みなので、エラーを無視する
+      if (error?.message?.includes('session_not_found') || 
+          error?.message?.includes('Session from session_id claim in JWT does not exist')) {
+        console.log('Session already invalidated, user effectively logged out');
+        return;
+      }
+      
+      // その他のエラーは再スローする
+      console.error('Logout error:', error);
+      throw error;
+    }
   };
 
   const value = {
