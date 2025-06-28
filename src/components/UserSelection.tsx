@@ -242,7 +242,7 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
         >
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">
-              登録ユーザー一覧 ({filteredUsers.length}人)
+              登録ユーザー覧 ({filteredUsers.length}人)
             </h3>
             <div className="flex items-center gap-4 text-xs text-gray-500">
               <div className="flex items-center">
