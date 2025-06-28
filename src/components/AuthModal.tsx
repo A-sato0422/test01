@@ -20,8 +20,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showQuiz, setShowQuiz] = useState(false);
-  const [tempUserId, setTempUserId] = useState('');
-  const [signupData, setSignupData] = useState<{email: string, password: string, name: string} | null>(null);
+  const [tempData, setTempData] = useState<any>(null);
 
   const { signIn, signUp, completeSignupQuiz } = useAuth();
 
@@ -32,12 +31,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
 
     try {
       if (mode === 'signup') {
-        const { error, needsQuiz, tempUserId: newTempUserId } = await signUp(email, password, name);
+        const { error, needsQuiz, tempData: newTempData } = await signUp(email, password, name);
         if (error) {
           setError(error.message);
-        } else if (needsQuiz && newTempUserId) {
-          setTempUserId(newTempUserId);
-          setSignupData({ email, password, name });
+        } else if (needsQuiz && newTempData) {
+          setTempData(newTempData);
           setShowQuiz(true);
         }
       } else {
@@ -56,19 +54,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
   };
 
   const handleQuizComplete = async (answers: Answer[]) => {
-    if (!signupData) return;
+    if (!tempData) return;
     
     setLoading(true);
     setError('');
 
     try {
-      const { error } = await completeSignupQuiz(
-        tempUserId, 
-        signupData.email, 
-        signupData.password, 
-        signupData.name, 
-        answers
-      );
+      const { error } = await completeSignupQuiz(tempData, answers);
       
       if (error) {
         setError('アカウント作成に失敗しました: ' + error.message);
@@ -93,8 +85,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
     setError('');
     setShowPassword(false);
     setShowQuiz(false);
-    setTempUserId('');
-    setSignupData(null);
+    setTempData(null);
   };
 
   const handleModeChange = (newMode: 'signin' | 'signup') => {
@@ -110,13 +101,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
   if (!isOpen) return null;
 
   // 質問画面を表示
-  if (showQuiz && signupData) {
+  if (showQuiz && tempData) {
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div className="w-full max-w-2xl max-h-screen overflow-hidden">
           <SignupQuiz
-            userName={signupData.name}
-            userId={tempUserId}
+            userName={tempData.name}
             onComplete={handleQuizComplete}
             onCancel={() => {
               setShowQuiz(false);
@@ -255,8 +245,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                   </p>
                 )}
               </motion.div>
-
-        
 
               {error && (
                 <motion.div

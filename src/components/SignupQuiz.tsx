@@ -6,19 +6,18 @@ import { Answer } from '../types';
 
 interface SignupQuizProps {
   userName: string;
-  userId: string;
   onComplete: (answers: Answer[]) => void;
   onCancel: () => void;
 }
 
-const SignupQuiz: React.FC<SignupQuizProps> = ({ userName, userId, onComplete, onCancel }) => {
+const SignupQuiz: React.FC<SignupQuizProps> = ({ userName, onComplete, onCancel }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
 
   const handleAnswer = (value: number) => {
     const answer: Answer = {
       id: currentQuestionIndex + 1,
-      user_id: userId,
+      user_id: '', // 一時的に空文字、実際のユーザーIDは後で設定
       question_id: currentQuestionIndex + 1,
       answer_value: value,
       created_at: new Date().toISOString()
@@ -74,8 +73,13 @@ const SignupQuiz: React.FC<SignupQuizProps> = ({ userName, userId, onComplete, o
             プロフィール設定
           </h2>
           <p className="text-sm text-gray-600">
-            {userName}さん、質問に答えてプロフィールを完成させましょう
+            {userName}さん、質問に答えてアカウントを作成しましょう
           </p>
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+            <p className="text-xs text-blue-700">
+              ⚠️ 質問回答完了後にアカウントが作成されます
+            </p>
+          </div>
         </div>
 
         {/* プログレスバー */}
