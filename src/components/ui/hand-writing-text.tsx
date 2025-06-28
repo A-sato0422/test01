@@ -34,7 +34,7 @@ function HandWrittenTitle({
                     animate="visible"
                     className="w-full h-full max-w-2xl"
                 >
-                    <title>相性診断</title>
+                    <title>H.MNK</title>
                     <motion.ellipse
                         cx="300"
                         cy="200"
