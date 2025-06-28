@@ -37,7 +37,7 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <span className="text-xl font-bold text-gray-800">相性診断</span>
+              <span className="text-xl font-bold text-gray-800">H.MNK</span>
             </div>
             <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
           </div>
@@ -57,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
               onClick={handleLogoClick}
               className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
             >
-              <span className="text-xl font-bold text-gray-800">相性診断</span>
+              <span className="text-xl font-bold text-gray-800">H.MNK</span>
             </motion.button>
 
             <motion.div
