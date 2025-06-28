@@ -25,29 +25,28 @@ function HandWrittenTitle({
 
     return (
         <div className="relative w-full max-w-7xl mx-auto py-40">
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 flex items-center justify-center">
                 <motion.svg
-                    width="100%"
-                    height="100%"
-                    viewBox="0 0 1600 800"
+                    width="600"
+                    height="400"
+                    viewBox="0 0 600 400"
                     initial="hidden"
                     animate="visible"
-                    className="w-full h-full"
+                    className="w-full h-full max-w-2xl"
                 >
                     <title>相性診断</title>
-                    <motion.path
-                        d="M 1250 140 
-                           C 1650 400, 1350 620, 800 680
-                           C 200 680, 50 620, 50 400
-                           C 50 180, 450 120, 800 120
-                           C 1150 120, 1250 260, 1250 260"
+                    <motion.ellipse
+                        cx="300"
+                        cy="200"
+                        rx="280"
+                        ry="180"
                         fill="none"
-                        strokeWidth="16"
+                        strokeWidth="3"
                         stroke="currentColor"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         variants={draw}
-                        className="text-pink-400 opacity-90"
+                        className="text-pink-400 opacity-70"
                     />
                 </motion.svg>
             </div>
