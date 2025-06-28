@@ -257,9 +257,9 @@ function AppContent() {
   };
 
   const handleRestart = () => {
-    setState('start');
-    setSelectedUser1(null);
-    setSelectedUser2(null);
+    // ユーザー選択画面に遷移（トップ画面ではなく）
+    setState('userSelection');
+    // 選択されたユーザーは保持し、回答データのみリセット
     setCurrentQuestionIndex(0);
     setUser1Answers([]);
     setUser2Answers([]);
