@@ -62,20 +62,21 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
 
   // 特別演出用のエフェクト
   const SpecialEffects = () => (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
       {/* 金色の星のエフェクト */}
       {[...Array(20)].map((_, i) => (
         <motion.div
           key={i}
           className="absolute"
+          style={{ opacity: 0.8 }}
           initial={{ 
             opacity: 0, 
             scale: 0,
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight
+            x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1200),
+            y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 800)
           }}
           animate={{ 
-            opacity: [0, 1, 0],
+            opacity: [0, 0.8, 0],
             scale: [0, 1.5, 0],
             rotate: [0, 360]
           }}
@@ -90,19 +91,20 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
         </motion.div>
       ))}
       
-      {/* ハートのエフェクト */}
+      {/* ハートのエフェクト - 下から上へ上昇 */}
       {[...Array(15)].map((_, i) => (
         <motion.div
           key={`heart-${i}`}
           className="absolute"
+          style={{ opacity: 0.8 }}
           initial={{ 
             opacity: 0, 
             scale: 0,
-            x: Math.random() * window.innerWidth,
-            y: window.innerHeight + 50
+            x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1200),
+            y: typeof window !== 'undefined' ? window.innerHeight + 50 : 850
           }}
           animate={{ 
-            opacity: [0, 1, 0],
+            opacity: [0, 0.8, 0],
             scale: [0, 1, 0],
             y: -100
           }}
@@ -116,6 +118,35 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           <Heart className="w-8 h-8 text-pink-400" fill="currentColor" />
         </motion.div>
       ))}
+
+      {/* 追加のキラキラエフェクト */}
+      {[...Array(25)].map((_, i) => (
+        <motion.div
+          key={`sparkle-${i}`}
+          className="absolute"
+          style={{ opacity: 0.8 }}
+          initial={{ 
+            opacity: 0, 
+            scale: 0,
+            x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1200),
+            y: typeof window !== 'undefined' ? window.innerHeight + 30 : 830
+          }}
+          animate={{ 
+            opacity: [0, 0.8, 0],
+            scale: [0, 1.2, 0],
+            y: -80,
+            rotate: [0, 180, 360]
+          }}
+          transition={{ 
+            duration: 5,
+            delay: i * 0.15,
+            repeat: Infinity,
+            repeatDelay: 7
+          }}
+        >
+          <Sparkles className="w-4 h-4 text-yellow-300" />
+        </motion.div>
+      ))}
     </div>
   );
 
@@ -125,6 +156,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
         ? 'bg-gradient-to-br from-yellow-100 via-pink-100 to-purple-100' 
         : 'bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100'
     }`}>
+      {/* 特別演出エフェクトを最前面に配置 */}
       {isSpecialCouple && <SpecialEffects />}
       
       <motion.div
@@ -143,7 +175,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-            className="absolute -top-8 left-1/2 transform -translate-x-1/2"
+            className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-20"
           >
             <Crown className="w-16 h-16 text-yellow-500" fill="currentColor" />
           </motion.div>
@@ -154,7 +186,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          className="relative mb-6"
+          className="relative mb-6 z-20"
         >
           <div className="flex justify-center items-center">
             <Heart className={`w-16 h-16 mx-2 ${isSpecialCouple ? 'text-yellow-400' : 'text-pink-400'}`} fill="currentColor" />
@@ -170,7 +202,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className={`text-2xl font-bold mb-2 ${isSpecialCouple ? 'text-yellow-800' : 'text-gray-800'}`}
+          className={`text-2xl font-bold mb-2 relative z-20 ${isSpecialCouple ? 'text-yellow-800' : 'text-gray-800'}`}
         >
           相性診断結果
         </motion.h2>
@@ -180,7 +212,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className={`text-lg mb-6 ${isSpecialCouple ? 'text-yellow-700 font-semibold' : 'text-gray-600'}`}
+          className={`text-lg mb-6 relative z-20 ${isSpecialCouple ? 'text-yellow-700 font-semibold' : 'text-gray-600'}`}
         >
           {user1Name} × {user2Name}
         </motion.p>
@@ -190,7 +222,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.8, type: "spring", stiffness: 150 }}
-          className="relative mb-6"
+          className="relative mb-6 z-20"
         >
           <div className={`w-32 h-32 rounded-full flex items-center justify-center mx-auto shadow-lg ${
             isSpecialCouple 
@@ -213,7 +245,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.0 }}
-          className="mb-8"
+          className="mb-8 relative z-20"
         >
           <h3 className={`text-xl font-bold mb-2 ${isSpecialCouple ? 'text-yellow-800' : 'text-gray-800'}`}>
             {scoreMessage.title}
@@ -228,7 +260,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2 }}
-          className={`rounded-2xl p-6 mb-6 ${
+          className={`rounded-2xl p-6 mb-6 relative z-20 ${
             isSpecialCouple 
               ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200' 
               : 'bg-gradient-to-r from-purple-50 to-pink-50'
@@ -258,7 +290,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 1.5 }}
-            className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-2xl p-6 mb-6"
+            className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-2xl p-6 mb-6 relative z-20"
           >
             <h4 className="font-bold text-lg mb-2">🎉 特別なお祝いメッセージ 🎉</h4>
             <p className="text-sm">
@@ -276,7 +308,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onRestart}
-          className={`w-full font-semibold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 ${
+          className={`w-full font-semibold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 relative z-20 ${
             isSpecialCouple 
               ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white' 
               : 'bg-gradient-to-r from-purple-400 to-pink-500 text-white'
