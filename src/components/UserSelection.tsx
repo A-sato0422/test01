@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Check, Search, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -22,22 +22,37 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // 検索語句が変更された時にスクロール位置をリセット
+  // 検索語句が変更された時の処理
   useEffect(() => {
-    if (searchTerm) {
-      // 検索結果が表示される際にページトップにスクロール
-      window.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: 'smooth'
-      });
-    }
+    // 検索語句が変更されたら即座にスクロールをリセット
+    scrollToTop();
   }, [searchTerm]);
+
+  // スクロールを最上部に移動する関数
+  const scrollToTop = () => {
+    // 複数の方法でスクロールを確実に実行
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // コンテナ要素も最上部にスクロール
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+    
+    // 追加の確実性のため、少し遅延してもう一度実行
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 50);
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -73,12 +88,8 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
 
       setUsers(usersWithAnswerStatus);
       
-      // データ取得後もページトップにスクロール
-      window.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: 'smooth'
-      });
+      // データ取得後にスクロールをリセット
+      scrollToTop();
     } catch (err) {
       setError('予期しないエラーが発生しました');
     } finally {
@@ -90,6 +101,19 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSearchTerm = e.target.value;
+    setSearchTerm(newSearchTerm);
+    
+    // 検索語句変更時に即座にスクロールリセット
+    scrollToTop();
+  };
+
+  const handleRefresh = async () => {
+    scrollToTop();
+    await fetchUsers();
+  };
 
   const handleUserSelect = (user: UserWithAnswerStatus, position: 1 | 2) => {
     if (position === 1) {
@@ -111,32 +135,6 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
     if (selectedUser1 && selectedUser2) {
       onUsersSelected(selectedUser1, selectedUser2);
     }
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSearchTerm = e.target.value;
-    setSearchTerm(newSearchTerm);
-    
-    // 特定のユーザー名が検索された場合は即座にスクロールトップ
-    if (newSearchTerm === '阿知良憲' || newSearchTerm === '畑中美菜子') {
-      setTimeout(() => {
-        window.scrollTo({
-          top: 0,
-          left: 0,
-          behavior: 'smooth'
-        });
-      }, 100);
-    }
-  };
-
-  const handleRefresh = async () => {
-    await fetchUsers();
-    // リフレッシュ後もページトップにスクロール
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: 'smooth'
-    });
   };
 
   const isUserSelected = (user: UserWithAnswerStatus) => {
@@ -184,7 +182,7 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100 p-4">
+    <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100 p-4">
       <div className="max-w-4xl mx-auto pt-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
