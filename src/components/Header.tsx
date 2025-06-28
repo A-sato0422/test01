@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, LogIn } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import AuthModal from './AuthModal';
 import UserProfile from './UserProfile';
 
@@ -14,6 +15,43 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [userName, setUserName] = useState<string>('');
+
+  // ユーザー名を取得
+  useEffect(() => {
+    const fetchUserName = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (error) {
+            console.error('Error fetching user name:', error);
+            // エラーの場合はメタデータまたはメールから名前を取得
+            const fallbackName = user.user_metadata?.name || user.email?.split('@')[0] || 'ユーザー';
+            setUserName(fallbackName);
+          } else if (data) {
+            setUserName(data.name);
+          } else {
+            // データが見つからない場合のフォールバック
+            const fallbackName = user.user_metadata?.name || user.email?.split('@')[0] || 'ユーザー';
+            setUserName(fallbackName);
+          }
+        } catch (err) {
+          console.error('Unexpected error fetching user name:', err);
+          const fallbackName = user.user_metadata?.name || user.email?.split('@')[0] || 'ユーザー';
+          setUserName(fallbackName);
+        }
+      } else {
+        setUserName('');
+      }
+    };
+
+    fetchUserName();
+  }, [user]);
 
   const handleAuthClick = () => {
     setAuthMode('signin');
@@ -29,6 +67,10 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
     if (onHomeClick) {
       onHomeClick();
     }
+  };
+
+  const handleUserNameClick = () => {
+    setProfileModalOpen(true);
   };
 
   if (loading) {
@@ -66,19 +108,43 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
               className="flex items-center gap-2"
             >
               {user ? (
-                <button
-                  onClick={() => setProfileModalOpen(true)}
-                  className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-500 text-white rounded-full hover:shadow-lg transition-all duration-300"
-                >
-                  <User className="w-5 h-5" />
-                </button>
+                // ログイン時の表示
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleUserNameClick}
+                    className="text-base font-medium transition-colors duration-200 hover:opacity-80"
+                    style={{ 
+                      color: '#333333',
+                      fontSize: '16px'
+                    }}
+                  >
+                    {userName}さん
+                  </button>
+                  <button
+                    onClick={() => setProfileModalOpen(true)}
+                    className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-500 text-white rounded-full hover:shadow-lg transition-all duration-300"
+                  >
+                    <User className="w-5 h-5" />
+                  </button>
+                </div>
               ) : (
+                // ログアウト時の表示
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleAuthClick}
-                    className="flex items-center justify-center w-10 h-10 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-all duration-300"
+                    className="flex items-center justify-center transition-all duration-200 hover:opacity-80"
+                    style={{
+                      width: '24px',
+                      height: '24px'
+                    }}
                   >
-                    <LogIn className="w-5 h-5" />
+                    <LogIn 
+                      className="text-gray-600" 
+                      style={{
+                        width: '24px',
+                        height: '24px'
+                      }}
+                    />
                   </button>
                   <button
                     onClick={handleSignUpClick}
