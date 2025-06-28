@@ -44,6 +44,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // セッションが無効化された場合の処理
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        console.log('Auth state changed:', event);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -195,19 +200,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
-    } catch (error: any) {
-      // セッションが既に無効化されている場合（session_not_found）は
-      // 実質的にログアウト済みなので、エラーを無視する
-      if (error?.message?.includes('session_not_found') || 
-          error?.message?.includes('Session from session_id claim in JWT does not exist')) {
-        console.log('Session already invalidated, user effectively logged out');
+      // ローカルセッションを先にクリア
+      setSession(null);
+      setUser(null);
+      
+      // Supabaseからのログアウトを試行
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        // セッション関連のエラーは無視（既にログアウト済みの状態）
+        if (error.message?.includes('session_not_found') || 
+            error.message?.includes('Session from session_id claim in JWT does not exist') ||
+            error.message?.includes('Invalid session') ||
+            error.status === 403) {
+          console.log('Session already invalidated or expired, user effectively logged out');
+          return;
+        }
+        
+        // その他のエラーは再スローするが、ローカル状態は既にクリア済み
+        console.error('Logout error (but local state cleared):', error);
         return;
       }
       
-      // その他のエラーは再スローする
-      console.error('Logout error:', error);
-      throw error;
+      console.log('Successfully logged out');
+    } catch (error: any) {
+      // 予期しないエラーもローカル状態はクリア済みなので、ログのみ出力
+      console.error('Unexpected logout error (but local state cleared):', error);
     }
   };
 
