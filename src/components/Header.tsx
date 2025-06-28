@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, LogIn, Heart } from 'lucide-react';
+import { User, LogIn } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from './AuthModal';
 import UserProfile from './UserProfile';
@@ -37,7 +37,6 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Heart className="w-8 h-8 text-pink-400 mr-2" fill="currentColor" />
               <span className="text-xl font-bold text-gray-800">相性診断</span>
             </div>
             <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
@@ -58,38 +57,34 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
               onClick={handleLogoClick}
               className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
             >
-              <Heart className="w-8 h-8 text-pink-400 mr-2" fill="currentColor" />
               <span className="text-xl font-bold text-gray-800">相性診断</span>
             </motion.button>
 
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
+              className="flex items-center gap-2"
             >
               {user ? (
                 <button
                   onClick={() => setProfileModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-500 text-white rounded-full hover:shadow-lg transition-all duration-300"
+                  className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-500 text-white rounded-full hover:shadow-lg transition-all duration-300"
                 >
-                  <User className="w-4 h-4" />
-                  <span className="text-sm font-medium">プロフィール</span>
+                  <User className="w-5 h-5" />
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleAuthClick}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                    className="flex items-center justify-center w-10 h-10 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-all duration-300"
                   >
-                    <LogIn className="w-4 h-4" />
-                    <span className="text-sm font-medium">ログイン</span>
+                    <LogIn className="w-5 h-5" />
                   </button>
                   <button
                     onClick={handleSignUpClick}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-500 text-white rounded-full hover:shadow-lg transition-all duration-300"
+                    className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-500 text-white rounded-full hover:shadow-lg transition-all duration-300"
                   >
-                    <User className="w-4 h-4" />
-                    <span className="text-sm font-medium">新規登録</span>
+                    <User className="w-5 h-5" />
                   </button>
                 </div>
               )}
