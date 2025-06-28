@@ -39,7 +39,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 1
             }}
-            className="absolute top-16 left-1/2 transform -translate-x-1/2"
+            className="absolute top-32 left-1/2 transform -translate-x-1/2"
           >
             <Sparkles className="w-8 h-8 text-yellow-400" />
           </motion.div>
@@ -56,7 +56,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 1.2
             }}
-            className="absolute top-24 right-16 transform"
+            className="absolute top-40 right-16 transform"
           >
             <Sparkles className="w-6 h-6 text-purple-400" />
           </motion.div>
@@ -73,7 +73,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 1.5
             }}
-            className="absolute top-1/2 right-8 transform -translate-y-1/2"
+            className="absolute top-1/2 right-8 transform translate-y-8"
           >
             <Sparkles className="w-7 h-7 text-pink-400" />
           </motion.div>
@@ -90,7 +90,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 1.8
             }}
-            className="absolute bottom-24 right-16 transform"
+            className="absolute bottom-8 right-16 transform"
           >
             <Sparkles className="w-5 h-5 text-blue-400" />
           </motion.div>
@@ -107,7 +107,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 2
             }}
-            className="absolute bottom-16 left-1/2 transform -translate-x-1/2"
+            className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
           >
             <Sparkles className="w-6 h-6 text-green-400" />
           </motion.div>
@@ -124,7 +124,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 2.2
             }}
-            className="absolute bottom-24 left-16 transform"
+            className="absolute bottom-8 left-16 transform"
           >
             <Sparkles className="w-7 h-7 text-orange-400" />
           </motion.div>
@@ -141,7 +141,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 2.5
             }}
-            className="absolute top-1/2 left-8 transform -translate-y-1/2"
+            className="absolute top-1/2 left-8 transform translate-y-8"
           >
             <Sparkles className="w-6 h-6 text-indigo-400" />
           </motion.div>
@@ -158,7 +158,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               repeatType: "reverse",
               delay: 2.8
             }}
-            className="absolute top-24 left-16 transform"
+            className="absolute top-40 left-16 transform"
           >
             <Sparkles className="w-5 h-5 text-teal-400" />
           </motion.div>
