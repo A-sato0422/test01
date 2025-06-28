@@ -110,7 +110,8 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
     } else if (user.answerCount > 0) {
       return <AlertCircle className="w-4 h-4 text-yellow-500" />;
     } else {
-      return <AlertCircle className="w-4 h-4 text-gray-400" />;
+      // 未回答の場合はアイコンを表示しない
+      return null;
     }
   };
 
@@ -252,10 +253,6 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
               <div className="flex items-center">
                 <AlertCircle className="w-3 h-3 text-yellow-500 mr-1" />
                 部分回答
-              </div>
-              <div className="flex items-center">
-                <AlertCircle className="w-3 h-3 text-gray-400 mr-1" />
-                未回答
               </div>
             </div>
           </div>
