@@ -22,37 +22,10 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchUsers();
   }, []);
-
-  // 検索語句が変更された時の処理
-  useEffect(() => {
-    // 検索語句が変更されたら即座にスクロールをリセット
-    scrollToTop();
-  }, [searchTerm]);
-
-  // スクロールを最上部に移動する関数
-  const scrollToTop = () => {
-    // 複数の方法でスクロールを確実に実行
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    
-    // コンテナ要素も最上部にスクロール
-    if (containerRef.current) {
-      containerRef.current.scrollTop = 0;
-    }
-    
-    // 追加の確実性のため、少し遅延してもう一度実行
-    setTimeout(() => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 50);
-  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -87,9 +60,6 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
       );
 
       setUsers(usersWithAnswerStatus);
-      
-      // データ取得後にスクロールをリセット
-      scrollToTop();
     } catch (err) {
       setError('予期しないエラーが発生しました');
     } finally {
@@ -101,19 +71,6 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSearchTerm = e.target.value;
-    setSearchTerm(newSearchTerm);
-    
-    // 検索語句変更時に即座にスクロールリセット
-    scrollToTop();
-  };
-
-  const handleRefresh = async () => {
-    scrollToTop();
-    await fetchUsers();
-  };
 
   const handleUserSelect = (user: UserWithAnswerStatus, position: 1 | 2) => {
     if (position === 1) {
@@ -182,7 +139,7 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
   };
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100 p-4">
       <div className="max-w-4xl mx-auto pt-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -264,12 +221,12 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
             <input
               type="text"
               value={searchTerm}
-              onChange={handleSearchChange}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
               placeholder="名前またはメールアドレスで検索..."
             />
             <button
-              onClick={handleRefresh}
+              onClick={fetchUsers}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
               <RefreshCw className="w-4 h-4 text-gray-500" />
@@ -309,7 +266,7 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
             <div className="text-center py-8">
               <p className="text-red-600 mb-4">{error}</p>
               <button
-                onClick={handleRefresh}
+                onClick={fetchUsers}
                 className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
               >
                 再試行
