@@ -126,7 +126,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 z-50"
         onClick={handleClose}
       >
         <motion.div
@@ -134,7 +134,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="bg-white rounded-3xl p-8 shadow-2xl max-w-md w-full relative"
+          className="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm mx-auto relative"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="text-center">
@@ -151,7 +151,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 z-50"
       onClick={handleClose}
     >
       <motion.div
@@ -159,73 +159,92 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="bg-white rounded-3xl p-8 shadow-2xl max-w-md w-full relative"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-auto relative overflow-hidden"
         onClick={(e) => e.stopPropagation()}
+        style={{ maxHeight: '90vh' }}
       >
-        <button
-          onClick={handleClose}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <X className="w-5 h-5 text-gray-500" />
-        </button>
-
-        <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-            className="inline-block p-4 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mb-4"
+        {/* ヘッダー部分 */}
+        <div className="relative p-6 pb-4">
+          <button
+            onClick={handleClose}
+            className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+            style={{ 
+              width: '36px', 
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            <User className="w-8 h-8 text-white" />
-          </motion.div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            プロフィール
-          </h2>
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+
+          <div className="text-center pr-12">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+              className="inline-block p-4 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mb-4"
+            >
+              <User className="w-8 h-8 text-white" />
+            </motion.div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              プロフィール
+            </h2>
+          </div>
         </div>
 
-        <div className="space-y-6">
+        {/* コンテンツ部分 */}
+        <div className="px-6 pb-6 space-y-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               お名前
             </label>
             {isEditing ? (
-              <div className="flex gap-2">
+              <div className="space-y-3">
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-base"
                   placeholder="お名前を入力"
                   disabled={loading}
+                  style={{ fontSize: '16px' }} // iOS Safari のズーム防止
                 />
-                <button
-                  onClick={handleUpdateProfile}
-                  disabled={loading || !editName.trim() || editName.trim() === userData.name}
-                  className="px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Save className="w-5 h-5" />
-                  )}
-                </button>
-                <button
-                  onClick={handleCancelEdit}
-                  disabled={loading}
-                  className="px-4 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors disabled:opacity-50"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleUpdateProfile}
+                    disabled={loading || !editName.trim() || editName.trim() === userData.name}
+                    className="flex-1 px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium"
+                  >
+                    {loading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        保存
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    disabled={loading}
+                    className="flex-1 px-4 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors disabled:opacity-50 text-sm font-medium flex items-center justify-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    キャンセル
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div className="flex items-center">
-                  <User className="w-5 h-5 text-gray-400 mr-3" />
-                  <span className="text-gray-800">{userData.name}</span>
+                <div className="flex items-center flex-1 min-w-0">
+                  <User className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+                  <span className="text-gray-800 truncate">{userData.name}</span>
                 </div>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                  className="p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0 ml-2"
                 >
                   <Edit2 className="w-4 h-4 text-gray-500" />
                 </button>
@@ -238,8 +257,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
               メールアドレス
             </label>
             <div className="flex items-center p-4 bg-gray-50 rounded-xl">
-              <Mail className="w-5 h-5 text-gray-400 mr-3" />
-              <span className="text-gray-800">{userData.email}</span>
+              <Mail className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+              <span className="text-gray-800 truncate text-sm">{userData.email}</span>
             </div>
           </div>
 
@@ -248,8 +267,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
               登録日
             </label>
             <div className="flex items-center p-4 bg-gray-50 rounded-xl">
-              <Calendar className="w-5 h-5 text-gray-400 mr-3" />
-              <span className="text-gray-800">
+              <Calendar className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+              <span className="text-gray-800 text-sm">
                 {new Date(userData.created_at).toLocaleDateString('ja-JP')}
               </span>
             </div>
