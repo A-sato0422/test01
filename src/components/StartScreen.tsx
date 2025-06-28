@@ -39,7 +39,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
           transition={{ delay: 0.2, duration: 0.6 }}
           className="text-4xl font-bold text-gray-800 mb-4"
         >
-          相性診断
+          H.MNK
         </motion.h1>
 
         <motion.p
