@@ -31,7 +31,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
 
     try {
       if (mode === 'signup') {
-        const { error, needsQuiz, tempData: newTempData } = await signUp(email, password, name);
+        const { error, needsQuiz, tempData: newTempData, userExists } = await signUp(email, password, name);
+        
+        if (userExists) {
+          setError('このメールアドレスは既に登録されています。ログインしてください。');
+          // 2秒後に自動的にログインモードに切り替え
+          setTimeout(() => {
+            handleModeChange('signin');
+          }, 2000);
+          return;
+        }
+        
         if (error) {
           setError(error.message);
         } else if (needsQuiz && newTempData) {

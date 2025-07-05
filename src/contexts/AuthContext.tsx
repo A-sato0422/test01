@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: any; needsQuiz?: boolean; tempData?: any }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: any; needsQuiz?: boolean; tempData?: any; userExists?: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   completeSignupQuiz: (tempData: any, answers: any[]) => Promise<{ error: any }>;
@@ -99,6 +99,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
+      // まず、メールアドレスが既に登録されているかチェック
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email.trim())
+        .single();
+
+      if (existingUser) {
+        return { 
+          error: null, 
+          userExists: true 
+        };
+      }
+
+      // checkErrorがあっても、それが「データが見つからない」エラーなら問題なし
+      if (checkError && checkError.code !== 'PGRST116') {
+        return { error: checkError };
+      }
+
       // アカウント情報を一時保存（実際のアカウント作成は行わない）
       const tempData = {
         email: email.trim(),
