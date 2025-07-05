@@ -290,6 +290,11 @@ function AppContent() {
           setState('start');
           setReAnswerData([]);
           setReAnswerQuestionIndex(0);
+        }, 200);
+      }
+    } catch (err) {
+      console.error('Unexpected error submitting re-answer:', err);
+    }
   };
 
   // 特別なユーザー組み合わせをチェックする関数
