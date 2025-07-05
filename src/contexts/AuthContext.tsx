@@ -235,30 +235,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      // 現在のセッションを確認
+      const { data: { session } } = await supabase.auth.getSession();
+      
       // ローカルセッションを先にクリア
       setSession(null);
       setUser(null);
       
-      // Supabaseからのログアウトを試行
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        // セッション関連のエラーは無視（既にログアウト済みの状態）
-        if (error.message?.includes('session_not_found') || 
-            error.message?.includes('Session from session_id claim in JWT does not exist') ||
-            error.message?.includes('Invalid session') ||
-            error.message?.includes('Auth session missing!') ||
-            error.status === 403) {
-          console.log('Session already invalidated or expired, user effectively logged out');
+      // セッションが存在する場合のみSupabaseからのログアウトを実行
+      if (session) {
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+          // セッション関連のエラーは無視（既にログアウト済みの状態）
+          if (error.message?.includes('session_not_found') || 
+              error.message?.includes('Session from session_id claim in JWT does not exist') ||
+              error.message?.includes('Invalid session') ||
+              error.message?.includes('Auth session missing!') ||
+              error.status === 403) {
+            console.log('Session already invalidated or expired, user effectively logged out');
+            return;
+          }
+          
+          // その他のエラーは再スローするが、ローカル状態は既にクリア済み
+          console.error('Logout error (but local state cleared):', error);
           return;
         }
         
-        // その他のエラーは再スローするが、ローカル状態は既にクリア済み
-        console.error('Logout error (but local state cleared):', error);
-        return;
+        console.log('Successfully logged out');
+      } else {
+        console.log('No active session found, user already logged out');
       }
-      
-      console.log('Successfully logged out');
     } catch (error: any) {
       // 予期しないエラーもローカル状態はクリア済みなので、ログのみ出力
       console.error('Unexpected logout error (but local state cleared):', error);
