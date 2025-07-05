@@ -103,10 +103,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose, onStartReAns
   };
 
   const handleReAnswer = () => {
+    console.log('handleReAnswer called');
     if (onStartReAnswer) {
+      console.log('Calling onStartReAnswer');
       onStartReAnswer();
+    } else {
+      console.log('onStartReAnswer is not defined');
     }
-    onClose();
   };
 
   const handleClose = () => {

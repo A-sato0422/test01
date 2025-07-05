@@ -98,14 +98,17 @@ function AppContent() {
   // 再回答イベントリスナーを設定
   useEffect(() => {
     const handleReAnswerEvent = () => {
+      console.log('App: handleReAnswerEvent triggered');
       handleStartReAnswer();
     };
 
+    console.log('App: Setting up startReAnswer event listener');
     window.addEventListener('startReAnswer', handleReAnswerEvent);
     return () => {
+      console.log('App: Removing startReAnswer event listener');
       window.removeEventListener('startReAnswer', handleReAnswerEvent);
     };
-  }, []);
+  }, [user, questions]); // userとquestionsが変更された時も再設定
 
   // ページ最上部にスクロールする関数
   const scrollToTop = () => {
@@ -141,9 +144,11 @@ function AppContent() {
   };
 
   const handleStartReAnswer = async () => {
+    console.log('App: handleStartReAnswer called', { user, questionsLength: questions.length });
     if (!user) return;
 
     try {
+      console.log('App: Fetching current answers for user:', user.id);
       // 現在のユーザーの回答を取得
       const { data: currentAnswers, error } = await supabase
         .from('answers')
@@ -156,13 +161,16 @@ function AppContent() {
         return;
       }
 
+      console.log('App: Current answers fetched:', currentAnswers);
       // 回答データを設定
       setReAnswerData(currentAnswers || []);
       setReAnswerQuestionIndex(0);
       
+      console.log('App: Scrolling to top and transitioning to reAnswer state');
       // 再回答画面に遷移
       scrollToTop();
       setTimeout(() => {
+        console.log('App: Setting state to reAnswer');
         setState('reAnswer');
       }, 200);
     } catch (err) {
