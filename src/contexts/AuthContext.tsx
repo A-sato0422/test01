@@ -210,10 +210,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    // ログイン成功時は必ずホーム画面に遷移するためのフラグを設定
+    if (!error && data.user) {
+      // セッションストレージに遷移先を明示的に設定
+      sessionStorage.setItem('loginRedirect', 'home');
+    }
 
     return { error };
   };
