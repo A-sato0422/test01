@@ -300,8 +300,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
                   {scoreMessage.description}
                 </p>
                 <p className="text-xs text-gray-500">
-                  ※この診断結果は、15の質問に対するお二人の回答を分析して算出されました。
-                  価値観、ライフスタイル、コミュニケーションスタイルなど、様々な要素を総合的に評価しています。
+                  ※この診断結果は、制作者の独断と偏見によって分析されています。あくまで参考程度に。
                 </p>
               </div>
             )}
