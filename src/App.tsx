@@ -191,7 +191,7 @@ function AppContent() {
     console.log('Home button clicked, resetting to start state');
     scrollToTop();
     resetAllStates();
-    setState('start');
+    setState('userSelection');
     setSelectedUser1(null);
     setSelectedUser2(null);
     setCurrentQuestionIndex(0);
