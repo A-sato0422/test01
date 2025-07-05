@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Check, Search, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
-import { questions } from '../data/questions';
 
 interface UserSelectionProps {
   onUsersSelected: (user1: User, user2: User) => void;
@@ -22,11 +21,33 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
   const [showDiagnosisModal, setShowDiagnosisModal] = useState(false);
 
   useEffect(() => {
     fetchUsers();
+    fetchQuestions();
   }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .order('id');
+
+      if (error) {
+        console.error('Error fetching questions:', error);
+      } else if (data) {
+        setQuestions(data);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching questions:', err);
+    } finally {
+      setQuestionsLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);

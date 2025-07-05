@@ -8,7 +8,6 @@ import UserSelection from './components/UserSelection';
 import QuestionCard from './components/QuestionCard';
 import CompatibilityResult from './components/CompatibilityResult';
 import SplashScreen from './components/SplashScreen';
-import { questions } from './data/questions';
 import { calculateCompatibility } from './utils/compatibility';
 import { User, Question, Answer } from './types';
 import { supabase } from './lib/supabase';
@@ -23,6 +22,32 @@ function AppContent() {
   const [user1Answers, setUser1Answers] = useState<Answer[]>([]);
   const [user2Answers, setUser2Answers] = useState<Answer[]>([]);
   const [compatibilityScore, setCompatibilityScore] = useState<number>(0);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
+
+  // 質問データを取得
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('questions')
+          .select('*')
+          .order('id');
+
+        if (error) {
+          console.error('Error fetching questions:', error);
+        } else if (data) {
+          setQuestions(data);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching questions:', err);
+      } finally {
+        setQuestionsLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
 
   // ページ最上部にスクロールする関数
   const scrollToTop = () => {
@@ -335,13 +360,28 @@ function AppContent() {
                   transition={{ duration: 0.5 }}
                 >
                   <ProtectedRoute>
-                    <QuestionCard
-                      question={questions[currentQuestionIndex]}
-                      questionNumber={currentQuestionIndex + 1}
-                      totalQuestions={questions.length}
-                      onAnswer={handleUser1Answer}
-                      userName={selectedUser1?.name || 'ユーザー1'}
-                    />
+                    {questionsLoading ? (
+                      <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-purple-100 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                          <p className="text-gray-600">質問を読み込み中...</p>
+                        </div>
+                      </div>
+                    ) : questions.length > 0 ? (
+                      <QuestionCard
+                        question={questions[currentQuestionIndex]}
+                        questionNumber={currentQuestionIndex + 1}
+                        totalQuestions={questions.length}
+                        onAnswer={handleUser1Answer}
+                        userName={selectedUser1?.name || 'ユーザー1'}
+                      />
+                    ) : (
+                      <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-purple-100 flex items-center justify-center">
+                        <div className="text-center">
+                          <p className="text-red-600">質問データの読み込みに失敗しました</p>
+                        </div>
+                      </div>
+                    )}
                   </ProtectedRoute>
                 </motion.div>
               )}
@@ -355,13 +395,28 @@ function AppContent() {
                   transition={{ duration: 0.5 }}
                 >
                   <ProtectedRoute>
-                    <QuestionCard
-                      question={questions[currentQuestionIndex]}
-                      questionNumber={currentQuestionIndex + 1}
-                      totalQuestions={questions.length}
-                      onAnswer={handleUser2Answer}
-                      userName={selectedUser2?.name || 'ユーザー2'}
-                    />
+                    {questionsLoading ? (
+                      <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-purple-100 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                          <p className="text-gray-600">質問を読み込み中...</p>
+                        </div>
+                      </div>
+                    ) : questions.length > 0 ? (
+                      <QuestionCard
+                        question={questions[currentQuestionIndex]}
+                        questionNumber={currentQuestionIndex + 1}
+                        totalQuestions={questions.length}
+                        onAnswer={handleUser2Answer}
+                        userName={selectedUser2?.name || 'ユーザー2'}
+                      />
+                    ) : (
+                      <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-purple-100 flex items-center justify-center">
+                        <div className="text-center">
+                          <p className="text-red-600">質問データの読み込みに失敗しました</p>
+                        </div>
+                      </div>
+                    )}
                   </ProtectedRoute>
                 </motion.div>
               )}

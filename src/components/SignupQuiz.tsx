@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, ArrowLeft, X, Loader2, Check } from 'lucide-react';
-import { questions, answerLabels } from '../data/questions';
+import { answerLabels } from '../data/questions';
 import { Answer } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface SignupQuizProps {
   userName: string;
@@ -12,10 +13,36 @@ interface SignupQuizProps {
 
 const SignupQuiz: React.FC<SignupQuizProps> = ({ userName, onComplete, onCancel }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedAnswer, setSubmittedAnswer] = useState<number | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
+
+  // 質問データを取得
+  React.useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('questions')
+          .select('*')
+          .order('id');
+
+        if (error) {
+          console.error('Error fetching questions:', error);
+        } else if (data) {
+          setQuestions(data);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching questions:', err);
+      } finally {
+        setQuestionsLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
 
   const handleAnswer = async (value: number) => {
     if (isSubmitting) return;
@@ -66,6 +93,49 @@ const SignupQuiz: React.FC<SignupQuizProps> = ({ userName, onComplete, onCancel 
   const currentQuestion = questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
+
+  // 質問データの読み込み中
+  if (questionsLoading) {
+    return (
+      <div className="max-h-screen overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-2xl max-w-md w-full mx-auto relative my-4"
+        >
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-green-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">質問を読み込み中...</p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // 質問データが空の場合
+  if (questions.length === 0) {
+    return (
+      <div className="max-h-screen overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-2xl max-w-md w-full mx-auto relative my-4"
+        >
+          <div className="text-center">
+            <p className="text-red-600 mb-4">質問データの読み込みに失敗しました</p>
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              戻る
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-h-screen overflow-y-auto">
