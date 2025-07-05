@@ -28,6 +28,7 @@ function AppContent() {
   // 質問データを取得
   useEffect(() => {
     const fetchQuestions = async () => {
+      setQuestionsLoading(true);
       try {
         const { data, error } = await supabase
           .from('questions')
@@ -36,11 +37,25 @@ function AppContent() {
 
         if (error) {
           console.error('Error fetching questions:', error);
+          // エラーの場合はローカルデータにフォールバック
+          const { questions: localQuestions } = await import('./data/questions');
+          setQuestions(localQuestions);
         } else if (data) {
           setQuestions(data);
+        } else {
+          // データが空の場合もローカルデータにフォールバック
+          const { questions: localQuestions } = await import('./data/questions');
+          setQuestions(localQuestions);
         }
       } catch (err) {
         console.error('Unexpected error fetching questions:', err);
+        // 予期しないエラーの場合もローカルデータにフォールバック
+        try {
+          const { questions: localQuestions } = await import('./data/questions');
+          setQuestions(localQuestions);
+        } catch (importErr) {
+          console.error('Failed to import local questions:', importErr);
+        }
       } finally {
         setQuestionsLoading(false);
       }
