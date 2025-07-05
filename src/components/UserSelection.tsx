@@ -31,6 +31,7 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
   }, []);
 
   const fetchQuestions = async () => {
+    console.log('[UserSelection] Starting to fetch questions...');
     setQuestionsLoading(true);
     try {
       const { data, error } = await supabase
@@ -38,28 +39,45 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
         .select('*')
         .order('id');
 
+      console.log('[UserSelection] Supabase response:', { data, error });
       if (error) {
-        console.error('Error fetching questions:', error);
+        console.log('[UserSelection] Error fetching questions from database:', error);
         // エラーの場合はローカルデータにフォールバック
         const { questions: localQuestions } = await import('../data/questions');
+        console.log('[UserSelection] Using local questions as fallback:', localQuestions);
         setQuestions(localQuestions);
-      } else if (data) {
+      } else if (data && data.length > 0) {
+        console.log('[UserSelection] Successfully fetched questions from database:', data);
         setQuestions(data);
       } else {
+        console.log('[UserSelection] No questions found in database, using local fallback');
         // データが空の場合もローカルデータにフォールバック
         const { questions: localQuestions } = await import('../data/questions');
+        console.log('[UserSelection] Using local questions as fallback:', localQuestions);
         setQuestions(localQuestions);
       }
     } catch (err) {
-      console.error('Unexpected error fetching questions:', err);
+      console.log('[UserSelection] Unexpected error fetching questions:', err);
       // 予期しないエラーの場合もローカルデータにフォールバック
       try {
         const { questions: localQuestions } = await import('../data/questions');
+        console.log('[UserSelection] Using local questions as fallback after error:', localQuestions);
         setQuestions(localQuestions);
       } catch (importErr) {
-        console.error('Failed to import local questions:', importErr);
+        console.log('[UserSelection] Failed to import local questions:', importErr);
+        // 最後の手段として、ハードコードされた質問を使用
+        const hardcodedQuestions = [
+          { id: 1, question_text: '休日はどう過ごしたいですか？', category: 'lifestyle', created_at: new Date().toISOString() },
+          { id: 2, question_text: '理想的なデートスポットは？', category: 'romance', created_at: new Date().toISOString() },
+          { id: 3, question_text: '将来の目標について話し合うことは重要ですか？', category: 'values', created_at: new Date().toISOString() },
+          { id: 4, question_text: 'お互いの趣味を尊重し合うことは大切ですか？', category: 'lifestyle', created_at: new Date().toISOString() },
+          { id: 5, question_text: 'コミュニケーションの頻度について、どう思いますか？', category: 'communication', created_at: new Date().toISOString() }
+        ];
+        console.log('[UserSelection] Using hardcoded questions as final fallback:', hardcodedQuestions);
+        setQuestions(hardcodedQuestions);
       }
     } finally {
+      console.log('[UserSelection] Questions loading completed');
       setQuestionsLoading(false);
     }
   };

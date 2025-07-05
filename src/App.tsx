@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import StartScreen from './components/StartScreen';
@@ -25,9 +26,15 @@ function AppContent() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
 
+  // デバッグ用のログ関数
+  const debugLog = (message: string, data?: any) => {
+    console.log(`[DEBUG] ${message}`, data);
+  };
+
   // 質問データを取得
   useEffect(() => {
     const fetchQuestions = async () => {
+      debugLog('Starting to fetch questions...');
       setQuestionsLoading(true);
       try {
         const { data, error } = await supabase
@@ -35,28 +42,45 @@ function AppContent() {
           .select('*')
           .order('id');
 
+        debugLog('Supabase response:', { data, error });
         if (error) {
-          console.error('Error fetching questions:', error);
+          debugLog('Error fetching questions from database:', error);
           // エラーの場合はローカルデータにフォールバック
           const { questions: localQuestions } = await import('./data/questions');
+          debugLog('Using local questions as fallback:', localQuestions);
           setQuestions(localQuestions);
-        } else if (data) {
+        } else if (data && data.length > 0) {
+          debugLog('Successfully fetched questions from database:', data);
           setQuestions(data);
         } else {
+          debugLog('No questions found in database, using local fallback');
           // データが空の場合もローカルデータにフォールバック
           const { questions: localQuestions } = await import('./data/questions');
+          debugLog('Using local questions as fallback:', localQuestions);
           setQuestions(localQuestions);
         }
       } catch (err) {
-        console.error('Unexpected error fetching questions:', err);
+        debugLog('Unexpected error fetching questions:', err);
         // 予期しないエラーの場合もローカルデータにフォールバック
         try {
           const { questions: localQuestions } = await import('./data/questions');
+          debugLog('Using local questions as fallback after error:', localQuestions);
           setQuestions(localQuestions);
         } catch (importErr) {
-          console.error('Failed to import local questions:', importErr);
+          debugLog('Failed to import local questions:', importErr);
+          // 最後の手段として、ハードコードされた質問を使用
+          const hardcodedQuestions = [
+            { id: 1, question_text: '休日はどう過ごしたいですか？', category: 'lifestyle', created_at: new Date().toISOString() },
+            { id: 2, question_text: '理想的なデートスポットは？', category: 'romance', created_at: new Date().toISOString() },
+            { id: 3, question_text: '将来の目標について話し合うことは重要ですか？', category: 'values', created_at: new Date().toISOString() },
+            { id: 4, question_text: 'お互いの趣味を尊重し合うことは大切ですか？', category: 'lifestyle', created_at: new Date().toISOString() },
+            { id: 5, question_text: 'コミュニケーションの頻度について、どう思いますか？', category: 'communication', created_at: new Date().toISOString() }
+          ];
+          debugLog('Using hardcoded questions as final fallback:', hardcodedQuestions);
+          setQuestions(hardcodedQuestions);
         }
       } finally {
+        debugLog('Questions loading completed');
         setQuestionsLoading(false);
       }
     };
@@ -466,9 +490,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
