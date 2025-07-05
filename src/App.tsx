@@ -19,11 +19,7 @@ type AppState = 'splash' | 'start' | 'userSelection' | 'quiz1' | 'quiz2' | 'resu
 
 function AppContent() {
   const { user } = useAuth();
-  const [state, setState] = useState<AppState>(() => {
-    // ログイン状態をチェックして初期状態を決定
-    const session = supabase.auth.getSession();
-    return 'splash'; // 常にスプラッシュから開始
-  });
+  const [state, setState] = useState<AppState>('splash'); // 常にスプラッシュから開始
   const [selectedUser1, setSelectedUser1] = useState<User | null>(null);
   const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -102,21 +98,18 @@ function AppContent() {
 
   // 認証状態の監視とリダイレクト処理
   useEffect(() => {
-    // ページ読み込み時に最上部にスクロール
-    const ensureTopScroll = () => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-
-    // 初期読み込み時にスクロール位置をリセット
-    ensureTopScroll();
-
     // 認証状態の変更を監視
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change event:', event, 'User:', session?.user?.email);
+      
+      // ページ読み込み時に最上部にスクロール
+      const ensureTopScroll = () => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      };
       
       // ログイン時の処理
       if (event === 'SIGNED_IN' && session?.user) {
@@ -130,10 +123,11 @@ function AppContent() {
         // 少し遅延してから画面遷移とスクロール位置の再確認
         setTimeout(() => {
           ensureTopScroll();
-          setState('start');
+          // スプラッシュ画面をスキップしてスタート画面に直接遷移
+          if (state === 'splash') {
+            setState('start');
+          }
         }, 100);
-      } else {
-        setState('start');
       }
       
       // セッションが無効化された場合の処理
@@ -143,7 +137,7 @@ function AppContent() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [state]);
 
   // 再回答イベントリスナーを設定
   useEffect(() => {
