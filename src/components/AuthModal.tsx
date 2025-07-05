@@ -53,6 +53,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
         if (error) {
           setError(error.message);
         } else {
+          // ログイン成功時はモーダルを閉じる
+          // App.tsxの認証状態変更監視でホーム画面への遷移が処理される
           onClose();
         }
       }
@@ -76,6 +78,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
         setError('アカウント作成に失敗しました: ' + error.message);
         setShowQuiz(false);
       } else {
+        // アカウント作成完了時もモーダルを閉じる
+        // App.tsxの認証状態変更監視でホーム画面への遷移が処理される
         setShowQuiz(false);
         onClose();
         resetForm();

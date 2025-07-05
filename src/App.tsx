@@ -95,6 +95,55 @@ function AppContent() {
     fetchQuestions();
   }, []);
 
+  // 認証状態の監視とリダイレクト処理
+  useEffect(() => {
+    // 現在のセッションを取得
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+      
+      // ログイン後のリダイレクト処理
+      if (session?.user && sessionStorage.getItem('loginRedirect') === 'home') {
+        console.log('Login detected, redirecting to home');
+        sessionStorage.removeItem('loginRedirect');
+        setState('start'); // ホーム画面に遷移
+      }
+    });
+
+    // 認証状態の変更を監視
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+      
+      // ログイン時の処理
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('User signed in, redirecting to home');
+        // ログイン成功時は必ずホーム画面に遷移
+        setState('start');
+        // 他の状態もリセット
+        setSelectedUser1(null);
+        setSelectedUser2(null);
+        setCurrentQuestionIndex(0);
+        setUser1Answers([]);
+        setUser2Answers([]);
+        setCompatibilityScore(0);
+        setReAnswerData([]);
+        setReAnswerQuestionIndex(0);
+      }
+      
+      // セッションが無効化された場合の処理
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        console.log('Auth state changed:', event);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // 再回答イベントリスナーを設定
   useEffect(() => {
     const handleReAnswerEvent = () => {
