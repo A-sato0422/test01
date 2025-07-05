@@ -26,11 +26,31 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
   };
 
   const getScoreMessage = (score: number) => {
-    if (score >= 90) return { title: '運命の相手！', message: '完璧な相性です！' };
-    if (score >= 80) return { title: '最高の相性！', message: 'とても素晴らしい関係です！' };
-    if (score >= 70) return { title: '良い相性！', message: 'お互いを理解し合えます！' };
-    if (score >= 60) return { title: 'まあまあの相性', message: '努力次第で良い関係に！' };
-    return { title: '異なる個性', message: 'お互いから学ぶことがたくさん！' };
+    if (score >= 90) return { 
+      title: '運命の相手！', 
+      message: '完璧な相性です！',
+      description: 'お二人は価値観や考え方が非常に似ており、自然体でいられる理想的な関係です。お互いの気持ちを直感的に理解し合えるため、深いコミュニケーションが可能です。この素晴らしい相性を活かして、共通の目標に向かって歩んでいくことで、さらに絆を深めることができるでしょう。定期的にお互いの成長について話し合い、感謝の気持ちを伝え合うことを心がけてください。'
+    };
+    if (score >= 80) return { 
+      title: '最高の相性！', 
+      message: 'とても素晴らしい関係です！',
+      description: 'お二人は多くの面で価値観が一致しており、お互いを深く理解し合える関係です。時には意見の違いもありますが、それがお互いの成長につながる良い刺激となっています。相手の意見に耳を傾け、違いを受け入れることで、より豊かな関係を築けます。お互いの趣味や興味を共有し、新しいことに一緒にチャレンジすることで、関係がさらに発展するでしょう。'
+    };
+    if (score >= 70) return { 
+      title: '良い相性！', 
+      message: 'お互いを理解し合えます！',
+      description: 'お二人は基本的な価値観が合っており、良好な関係を築ける相性です。時には考え方の違いを感じることもありますが、それは成長の機会でもあります。お互いの違いを認め合い、相手の立場に立って考えることを意識してください。定期的に心を開いて話し合う時間を作り、お互いの気持ちや考えを共有することで、理解がより深まります。小さな感謝の気持ちを日常的に表現することも大切です。'
+    };
+    if (score >= 60) return { 
+      title: 'まあまあの相性', 
+      message: '努力次第で良い関係に！',
+      description: 'お二人にはいくつかの違いがありますが、それは決して悪いことではありません。お互いの個性を尊重し、違いを学び合うことで、より豊かな関係を築くことができます。相手の考えを理解しようとする姿勢を大切にし、積極的にコミュニケーションを取ることが重要です。共通の趣味や活動を見つけて一緒に楽しむ時間を増やし、お互いの良いところを見つけて褒め合うことを心がけてください。忍耐と理解があれば、素晴らしい関係に発展する可能性があります。'
+    };
+    return { 
+      title: '異なる個性', 
+      message: 'お互いから学ぶことがたくさん！',
+      description: 'お二人は異なる価値観や考え方を持っていますが、それは新しい発見と成長の機会に満ちています。相手の視点から物事を見ることで、自分では気づかなかった新しい世界が広がります。お互いの違いを批判するのではなく、学びの機会として捉えることが大切です。相手の良いところを積極的に見つけて認め合い、小さな共通点から関係を築いていきましょう。時間をかけてゆっくりとお互いを理解し合うことで、予想以上に深い絆を育むことができるかもしれません。'
+    };
   };
 
   const getSpecialMessage = () => {
@@ -245,7 +265,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.0 }}
-          className="mb-8 relative z-20"
+          className="mb-6 relative z-20"
         >
           <h3 className={`text-xl font-bold mb-2 ${isSpecialCouple ? 'text-yellow-800' : 'text-gray-800'}`}>
             {scoreMessage.title}
@@ -255,7 +275,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           </p>
         </motion.div>
 
-        {/* Description */}
+        {/* Enhanced Description */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -267,7 +287,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           }`}
         >
           <h4 className={`font-semibold mb-3 ${isSpecialCouple ? 'text-yellow-800' : 'text-gray-800'}`}>
-            {isSpecialCouple ? '特別な診断結果' : '診断について'}
+            {isSpecialCouple ? '特別な診断結果' : '詳細な診断結果'}
           </h4>
           <div className={`text-sm leading-relaxed ${isSpecialCouple ? 'text-yellow-700' : 'text-gray-600'}`}>
             {isSpecialCouple ? (
@@ -275,11 +295,15 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
                 {scoreMessage.description}
               </div>
             ) : (
-              <p>
-                この相性スコアは、15の質問に対するお二人の回答を分析して算出されました。
-                価値観、ライフスタイル、コミュニケーションスタイルなど、
-                様々な要素を総合的に評価しています。
-              </p>
+              <div className="text-left">
+                <p className="mb-3">
+                  {scoreMessage.description}
+                </p>
+                <p className="text-xs text-gray-500">
+                  ※この診断結果は、15の質問に対するお二人の回答を分析して算出されました。
+                  価値観、ライフスタイル、コミュニケーションスタイルなど、様々な要素を総合的に評価しています。
+                </p>
+              </div>
             )}
           </div>
         </motion.div>
