@@ -157,6 +157,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log('Account created successfully, user:', data.user.email);
 
+      // アカウント作成成功時にもスクロール位置をリセット
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
       // usersテーブルにユーザー情報を保存
       const { error: insertUserError } = await supabase
         .from('users')
@@ -214,6 +219,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // ログイン成功時の処理
     if (!error && data.user) {
       console.log('Login successful, user:', data.user.email);
+      
+      // ログイン成功時に即座にスクロール位置をリセット
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      
       // 状態をクリアしてホーム画面への遷移を確実にする
       sessionStorage.clear();
       localStorage.removeItem('appState');

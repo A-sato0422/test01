@@ -102,6 +102,16 @@ function AppContent() {
 
   // 認証状態の監視とリダイレクト処理
   useEffect(() => {
+    // ページ読み込み時に最上部にスクロール
+    const ensureTopScroll = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    // 初期読み込み時にスクロール位置をリセット
+    ensureTopScroll();
+
     // 認証状態の変更を監視
     const {
       data: { subscription },
@@ -111,8 +121,18 @@ function AppContent() {
       // ログイン時の処理
       if (event === 'SIGNED_IN' && session?.user) {
         console.log('User signed in, redirecting to home');
+        // ログイン成功時に即座にスクロール位置をリセット
+        ensureTopScroll();
+        
         // 強制的にホーム画面に遷移し、全ての状態をリセット
         resetAllStates();
+        
+        // 少し遅延してから画面遷移とスクロール位置の再確認
+        setTimeout(() => {
+          ensureTopScroll();
+          setState('start');
+        }, 100);
+      } else {
         setState('start');
       }
       
@@ -156,15 +176,18 @@ function AppContent() {
   };
 
   const handleSplashComplete = () => {
+    scrollToTop();
     setState('start');
   };
 
   const handleStart = () => {
+    scrollToTop();
     setState('userSelection');
   };
 
   const handleHomeClick = () => {
     console.log('Home button clicked, resetting to start state');
+    scrollToTop();
     resetAllStates();
     setState('start');
     setSelectedUser1(null);
@@ -561,11 +584,16 @@ function AppContent() {
 
   // 結果画面が表示された時にもスクロールを確実に実行
   useEffect(() => {
-    if (state === 'result') {
+    if (state === 'result' || state === 'start') {
       // 画面遷移後に再度スクロールを実行
       setTimeout(() => {
         scrollToTop();
-      }, 100);
+      }, 50);
+      
+      // さらに確実にするため、もう一度実行
+      setTimeout(() => {
+        scrollToTop();
+      }, 200);
     }
   }, [state]);
 

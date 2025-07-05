@@ -55,6 +55,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
         } else {
           // ログイン成功時はモーダルを閉じる
           // App.tsxの認証状態変更監視でホーム画面への遷移が処理される
+          
+          // モーダルを閉じる前にスクロール位置をリセット
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+          
           resetForm();
           onClose();
         }
@@ -81,6 +87,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
       } else {
         // アカウント作成完了時もモーダルを閉じる
         // App.tsxの認証状態変更監視でホーム画面への遷移が処理される
+        
+        // モーダルを閉じる前にスクロール位置をリセット
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        
         resetForm();
         setShowQuiz(false);
         onClose();
