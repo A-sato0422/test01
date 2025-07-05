@@ -22,6 +22,7 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showDiagnosisModal, setShowDiagnosisModal] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -88,9 +89,23 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
     }
   };
 
-  const handleStartDiagnosis = () => {
+  const handleStartDiagnosis = async () => {
     if (selectedUser1 && selectedUser2) {
-      onUsersSelected(selectedUser1, selectedUser2);
+      // ローディングモーダルを表示
+      setShowDiagnosisModal(true);
+      
+      try {
+        // 2-3秒の遅延を設定
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        
+        // モーダルを非表示にして診断結果を表示
+        setShowDiagnosisModal(false);
+        onUsersSelected(selectedUser1, selectedUser2);
+      } catch (error) {
+        // エラーが発生した場合もモーダルを閉じる
+        setShowDiagnosisModal(false);
+        console.error('診断処理でエラーが発生しました:', error);
+      }
     }
   };
 
@@ -140,6 +155,79 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100 p-4">
+      {/* 診断中モーダル */}
+      <AnimatePresence>
+        {showDiagnosisModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl max-w-sm w-full mx-auto text-center"
+            >
+              {/* ローディングアニメーション */}
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-16 h-16 border-4 border-purple-200 border-t-purple-500 rounded-full mx-auto mb-6"
+              />
+              
+              {/* メッセージ */}
+              <motion.h3
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-xl font-bold text-gray-800 mb-2"
+              >
+                診断中です...
+              </motion.h3>
+              
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-gray-600 text-sm mb-4"
+              >
+                {selectedUser1?.name}さんと{selectedUser2?.name}さんの
+                <br />
+                相性を分析しています
+              </motion.p>
+              
+              {/* プログレスバー */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="w-full bg-gray-200 rounded-full h-2 mb-4"
+              >
+                <motion.div
+                  className="h-full bg-gradient-to-r from-purple-400 to-pink-500 rounded-full"
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 2.5, ease: 'easeInOut' }}
+                />
+              </motion.div>
+              
+              {/* 追加メッセージ */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="text-xs text-gray-500"
+              >
+                しばらくお待ちください...
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-4xl mx-auto pt-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -370,14 +458,14 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
         >
           <button
             onClick={handleStartDiagnosis}
-            disabled={!selectedUser1 || !selectedUser2}
+            disabled={!selectedUser1 || !selectedUser2 || showDiagnosisModal}
             className={`px-8 py-4 font-semibold rounded-2xl shadow-lg transition-all duration-300 ${
-              selectedUser1 && selectedUser2
+              selectedUser1 && selectedUser2 && !showDiagnosisModal
                 ? 'bg-gradient-to-r from-purple-400 to-pink-500 text-white hover:shadow-xl hover:scale-105'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
           >
-            {getDiagnosisButtonText()}
+            {showDiagnosisModal ? '診断中...' : getDiagnosisButtonText()}
           </button>
         </motion.div>
       </div>
