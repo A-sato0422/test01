@@ -294,7 +294,7 @@ function AppContent() {
         {state !== 'splash' && (
           <>
             <Header onHomeClick={handleHomeClick} />
-            <div className="pt-16">
+            <div className="pt-12">
               {state === 'start' && (
                 <motion.div
                   key="start"
