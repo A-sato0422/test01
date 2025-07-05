@@ -12,6 +12,7 @@ interface AuthContextType {
   completeSignupQuiz: (tempData: any, answers: any[]) => Promise<{ error: any }>;
   updateUserProfile: (name: string) => Promise<{ error: any }>;
   refreshUser: () => Promise<void>;
+  user: User | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

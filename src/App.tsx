@@ -9,11 +9,12 @@ import UserSelection from './components/UserSelection';
 import QuestionCard from './components/QuestionCard';
 import CompatibilityResult from './components/CompatibilityResult';
 import SplashScreen from './components/SplashScreen';
+import ReAnswerQuestionCard from './components/ReAnswerQuestionCard';
 import { calculateCompatibility } from './utils/compatibility';
 import { User, Question, Answer } from './types';
 import { supabase } from './lib/supabase';
 
-type AppState = 'splash' | 'start' | 'userSelection' | 'quiz1' | 'quiz2' | 'result';
+type AppState = 'splash' | 'start' | 'userSelection' | 'quiz1' | 'quiz2' | 'result' | 'reAnswer';
 
 function AppContent() {
   const [state, setState] = useState<AppState>('splash');
@@ -25,6 +26,10 @@ function AppContent() {
   const [compatibilityScore, setCompatibilityScore] = useState<number>(0);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
+
+  // 再回答用の状態
+  const [reAnswerData, setReAnswerData] = useState<Answer[]>([]);
+  const [reAnswerQuestionIndex, setReAnswerQuestionIndex] = useState(0);
 
   // デバッグ用のログ関数
   const debugLog = (message: string, data?: any) => {
@@ -88,6 +93,18 @@ function AppContent() {
     fetchQuestions();
   }, []);
 
+  // 再回答イベントリスナーを設定
+  useEffect(() => {
+    const handleReAnswerEvent = () => {
+      handleStartReAnswer();
+    };
+
+    window.addEventListener('startReAnswer', handleReAnswerEvent);
+    return () => {
+      window.removeEventListener('startReAnswer', handleReAnswerEvent);
+    };
+  }, []);
+
   // ページ最上部にスクロールする関数
   const scrollToTop = () => {
     // 複数の方法でスクロールを確実に実行
@@ -119,6 +136,94 @@ function AppContent() {
     setUser1Answers([]);
     setUser2Answers([]);
     setCompatibilityScore(0);
+  };
+
+  const handleStartReAnswer = async () => {
+    if (!user) return;
+
+    try {
+      // 現在のユーザーの回答を取得
+      const { data: currentAnswers, error } = await supabase
+        .from('answers')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('question_id');
+
+      if (error) {
+        console.error('Error fetching current answers:', error);
+        return;
+      }
+
+      // 回答データを設定
+      setReAnswerData(currentAnswers || []);
+      setReAnswerQuestionIndex(0);
+      
+      // 再回答画面に遷移
+      scrollToTop();
+      setTimeout(() => {
+        setState('reAnswer');
+      }, 200);
+    } catch (err) {
+      console.error('Unexpected error starting re-answer:', err);
+    }
+  };
+
+  const handleReAnswerSubmit = async (value: number) => {
+    if (!user) return;
+
+    const questionId = reAnswerQuestionIndex + 1;
+    
+    try {
+      // データベースの回答を更新
+      const { error } = await supabase
+        .from('answers')
+        .upsert([{
+          user_id: user.id,
+          question_id: questionId,
+          answer_value: value
+        }]);
+
+      if (error) {
+        console.error('Error updating answer:', error);
+        return;
+      }
+
+      // ローカルの回答データを更新
+      const updatedAnswers = [...reAnswerData];
+      const existingAnswerIndex = updatedAnswers.findIndex(a => a.question_id === questionId);
+      
+      if (existingAnswerIndex >= 0) {
+        updatedAnswers[existingAnswerIndex] = {
+          ...updatedAnswers[existingAnswerIndex],
+          answer_value: value
+        };
+      } else {
+        updatedAnswers.push({
+          id: questionId,
+          user_id: user.id,
+          question_id: questionId,
+          answer_value: value,
+          created_at: new Date().toISOString()
+        });
+      }
+      
+      setReAnswerData(updatedAnswers);
+
+      // 次の質問に進むか完了
+      if (reAnswerQuestionIndex < questions.length - 1) {
+        setReAnswerQuestionIndex(reAnswerQuestionIndex + 1);
+      } else {
+        // 再回答完了 - スタート画面に戻る
+        scrollToTop();
+        setTimeout(() => {
+          setState('start');
+          setReAnswerData([]);
+          setReAnswerQuestionIndex(0);
+        }, 200);
+      }
+    } catch (err) {
+      console.error('Unexpected error submitting re-answer:', err);
+    }
   };
 
   // 特別なユーザー組み合わせをチェックする関数
@@ -474,6 +579,42 @@ function AppContent() {
                         totalQuestions={questions.length}
                         onAnswer={handleUser2Answer}
                         userName={selectedUser2?.name || 'ユーザー2'}
+                      />
+                    ) : (
+                      <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-purple-100 flex items-center justify-center">
+                        <div className="text-center">
+                          <p className="text-red-600">質問データの読み込みに失敗しました</p>
+                        </div>
+                      </div>
+                    )}
+                  </ProtectedRoute>
+                </motion.div>
+              )}
+
+              {state === 'reAnswer' && (
+                <motion.div
+                  key="reAnswer"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <ProtectedRoute>
+                    {questionsLoading ? (
+                      <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-purple-100 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                          <p className="text-gray-600">質問を読み込み中...</p>
+                        </div>
+                      </div>
+                    ) : questions.length > 0 ? (
+                      <ReAnswerQuestionCard
+                        question={questions[reAnswerQuestionIndex]}
+                        questionNumber={reAnswerQuestionIndex + 1}
+                        totalQuestions={questions.length}
+                        onAnswer={handleReAnswerSubmit}
+                        currentAnswer={reAnswerData.find(a => a.question_id === reAnswerQuestionIndex + 1)?.answer_value}
+                        onCancel={() => setState('start')}
                       />
                     ) : (
                       <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-purple-100 flex items-center justify-center">

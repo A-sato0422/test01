@@ -169,6 +169,11 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
       <UserProfile
         isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
+        onStartReAnswer={() => {
+          setProfileModalOpen(false);
+          // App.tsxのhandleReAnswerを呼び出すためのイベントを発火
+          window.dispatchEvent(new CustomEvent('startReAnswer'));
+        }}
       />
     </>
   );

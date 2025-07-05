@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Calendar, LogOut, Edit2, Save, X } from 'lucide-react';
+import { User, Mail, Calendar, LogOut, Edit2, Save, X, MessageSquare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
 interface UserProfileProps {
   isOpen: boolean;
   onClose: () => void;
+  onStartReAnswer?: () => void;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose, onStartReAnswer }) => {
   const { user, signOut, updateUserProfile } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -98,6 +99,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
 
   const handleSignOut = async () => {
     await signOut();
+    onClose();
+  };
+
+  const handleReAnswer = () => {
+    if (onStartReAnswer) {
+      onStartReAnswer();
+    }
     onClose();
   };
 
@@ -279,6 +287,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleReAnswer}
+            className="w-full bg-gradient-to-r from-blue-400 to-purple-500 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 mb-4"
+          >
+            <MessageSquare className="w-5 h-5" />
+            質問に再回答
+          </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.02 }}
