@@ -56,11 +56,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
           // ログイン成功時はモーダルを閉じる
           // App.tsxの認証状態変更監視でホーム画面への遷移が処理される
           
-          // ログイン成功時は即座にモーダルを閉じて状態をリセット
-          setTimeout(() => {
-            resetForm();
-            onClose();
-          }, 100);
+          // モーダルを閉じる前にスクロール位置をリセット
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+          
+          resetForm();
+          onClose();
         }
       }
     } catch (err) {
@@ -86,12 +88,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
         // アカウント作成完了時もモーダルを閉じる
         // App.tsxの認証状態変更監視でホーム画面への遷移が処理される
         
-        // アカウント作成成功時は即座にモーダルを閉じて状態をリセット
-        setTimeout(() => {
-          resetForm();
-          setShowQuiz(false);
-          onClose();
-        }, 100);
+        // モーダルを閉じる前にスクロール位置をリセット
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        
+        resetForm();
+        setShowQuiz(false);
+        onClose();
       }
     } catch (err) {
       setError('予期しないエラーが発生しました');
