@@ -287,7 +287,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           }`}
         >
           <h4 className={`font-semibold mb-3 ${isSpecialCouple ? 'text-yellow-800' : 'text-gray-800'}`}>
-            {isSpecialCouple ? '特別な診断結果' : '詳細な診断結果'}
+            {isSpecialCouple ? '詳細な診断結果' : '詳細な診断結果'}
           </h4>
           <div className={`text-sm leading-relaxed ${isSpecialCouple ? 'text-yellow-700' : 'text-gray-600'}`}>
             {isSpecialCouple ? (
@@ -317,7 +317,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           >
             <h4 className="font-bold text-lg mb-2">🎉 26歳は強運の年 🎉</h4>
             <p className="text-sm text-left">
-              26歳はとても良い1年ないなることでしょう。<br/>
+              26歳はとても良い1年になります。<br/>
               仕事もプライベートも順調で、相乗効果で肌ツヤも良くなることでしょう。<br/>
               「若くなった？」と周りから言われますが、それは社交辞令ではなく、事実なのでありがたく受け取りましょう。
               
