@@ -104,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('users')
         .select('email')
         .eq('email', email.trim())
-        .single();
+        .maybeSingle();
 
       if (existingUser) {
         return { 
@@ -113,8 +113,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // checkErrorがあっても、それが「データが見つからない」エラーなら問題なし
-      if (checkError && checkError.code !== 'PGRST116') {
+      // checkErrorがある場合はエラーを返す
+      if (checkError) {
         return { error: checkError };
       }
 
