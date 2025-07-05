@@ -20,6 +20,21 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
     console.log(`[UserSelection] ${message}`, data);
   };
 
+  // コンポーネントマウント時にスクロール位置を確実にリセット
+  React.useEffect(() => {
+    const scrollToTop = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    
+    scrollToTop();
+    
+    // 少し遅延してもう一度実行
+    const timer = setTimeout(scrollToTop, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const [users, setUsers] = useState<UserWithAnswerStatus[]>([]);
   const [selectedUser1, setSelectedUser1] = useState<UserWithAnswerStatus | null>(null);
   const [selectedUser2, setSelectedUser2] = useState<UserWithAnswerStatus | null>(null);

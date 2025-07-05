@@ -567,8 +567,14 @@ function AppContent() {
   };
 
   const handleRestart = () => {
+    // ページ最上部にスクロール
+    scrollToTop();
+    
     // ユーザー選択画面に遷移（トップ画面ではなく）
-    setState('userSelection');
+    setTimeout(() => {
+      setState('userSelection');
+    }, 100);
+    
     // 選択されたユーザーは保持し、回答データのみリセット
     setCurrentQuestionIndex(0);
     setUser1Answers([]);
