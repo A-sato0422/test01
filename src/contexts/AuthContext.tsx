@@ -211,6 +211,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      // ログイン成功時の処理
+      if (!error && data.user) {
+        console.log('Login successful, user:', data.user.email);
+        
+        // ログイン成功時に即座にスクロール位置をリセット
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        
+        // 状態をクリアしてホーム画面への遷移を確実にする
+        sessionStorage.clear();
+        localStorage.removeItem('appState');
+        
+        // 少し遅延してから状態を更新（認証状態の変更イベントを確実に発火させる）
+        setTimeout(() => {
+          setSession(data.session);
+          setUser(data.user);
+        }, 50);
+      }
+
+      return { error };
+    } catch (err) {
+      console.error('Login error:', err);
+      return { error: err };
+    }
+  };
+
+  const signInOld = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,

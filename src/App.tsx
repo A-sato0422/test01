@@ -98,46 +98,74 @@ function AppContent() {
 
   // 認証状態の監視とリダイレクト処理
   useEffect(() => {
-    // 認証状態の変更を監視
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change event:', event, 'User:', session?.user?.email);
+    let authSubscription: any = null;
+    
+    const setupAuthListener = () => {
+      // 既存のサブスクリプションがあれば解除
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
       
-      // ページ読み込み時に最上部にスクロール
-      const ensureTopScroll = () => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      };
-      
-      // ログイン時の処理
-      if (event === 'SIGNED_IN' && session?.user) {
-        console.log('User signed in, redirecting to home');
-        // ログイン成功時に即座にスクロール位置をリセット
-        ensureTopScroll();
+      // 認証状態の変更を監視
+      authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('Auth state change event:', event, 'User:', session?.user?.email, 'Current state:', state);
         
-        // 強制的にホーム画面に遷移し、全ての状態をリセット
-        resetAllStates();
+        // ページ読み込み時に最上部にスクロール
+        const ensureTopScroll = () => {
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        };
         
-        // 少し遅延してから画面遷移とスクロール位置の再確認
-        setTimeout(() => {
+        // ログイン時の処理
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('User signed in, forcing redirect to home');
+          
+          // ログイン成功時に即座にスクロール位置をリセット
           ensureTopScroll();
-          // スプラッシュ画面をスキップしてスタート画面に直接遷移
-          if (state === 'splash') {
+          
+          // 強制的にホーム画面に遷移し、全ての状態をリセット
+          resetAllStates();
+          
+          // 即座にスタート画面に遷移（スプラッシュをスキップ）
+          setState('start');
+          
+          // 少し遅延してから再度確認
+          setTimeout(() => {
+            ensureTopScroll();
+            console.log('Post-login state check, ensuring start state');
             setState('start');
-          }
-        }, 100);
-      }
-      
-      // セッションが無効化された場合の処理
-      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-        console.log('Auth state changed:', event);
-      }
-    });
+          }, 100);
+          
+          // さらに確実にするため、もう一度実行
+          setTimeout(() => {
+            ensureTopScroll();
+            setState('start');
+          }, 300);
+        }
+        
+        // ログアウト時の処理
+        if (event === 'SIGNED_OUT') {
+          console.log('User signed out, resetting to splash');
+          resetAllStates();
+          setState('splash');
+        }
+        
+        // セッションが無効化された場合の処理
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed');
+        }
+      });
+    };
+    
+    setupAuthListener();
 
-    return () => subscription.unsubscribe();
-  }, [state]);
+    return () => {
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
+    };
+  }, []); // 依存配列を空にして、一度だけ実行
 
   // 再回答イベントリスナーを設定
   useEffect(() => {
