@@ -19,7 +19,11 @@ type AppState = 'splash' | 'start' | 'userSelection' | 'quiz1' | 'quiz2' | 'resu
 
 function AppContent() {
   const { user } = useAuth();
-  const [state, setState] = useState<AppState>('splash');
+  const [state, setState] = useState<AppState>(() => {
+    // ログイン状態をチェックして初期状態を決定
+    const session = supabase.auth.getSession();
+    return 'splash'; // 常にスプラッシュから開始
+  });
   const [selectedUser1, setSelectedUser1] = useState<User | null>(null);
   const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -97,42 +101,18 @@ function AppContent() {
 
   // 認証状態の監視とリダイレクト処理
   useEffect(() => {
-    // 現在のセッションを取得
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      
-      // ログイン後のリダイレクト処理
-      if (session?.user && sessionStorage.getItem('loginRedirect') === 'home') {
-        console.log('Login detected, redirecting to home');
-        sessionStorage.removeItem('loginRedirect');
-        setState('start'); // ホーム画面に遷移
-      }
-    });
-
     // 認証状態の変更を監視
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      console.log('Auth state change event:', event, 'User:', session?.user?.email);
       
       // ログイン時の処理
       if (event === 'SIGNED_IN' && session?.user) {
         console.log('User signed in, redirecting to home');
-        // ログイン成功時は必ずホーム画面に遷移
+        // 強制的にホーム画面に遷移し、全ての状態をリセット
+        resetAllStates();
         setState('start');
-        // 他の状態もリセット
-        setSelectedUser1(null);
-        setSelectedUser2(null);
-        setCurrentQuestionIndex(0);
-        setUser1Answers([]);
-        setUser2Answers([]);
-        setCompatibilityScore(0);
-        setReAnswerData([]);
-        setReAnswerQuestionIndex(0);
       }
       
       // セッションが無効化された場合の処理
@@ -143,6 +123,24 @@ function AppContent() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // 全ての状態をリセットする関数
+  const resetAllStates = () => {
+    console.log('Resetting all application states');
+    setSelectedUser1(null);
+    setSelectedUser2(null);
+    setCurrentQuestionIndex(0);
+    setUser1Answers([]);
+    setUser2Answers([]);
+    setCompatibilityScore(0);
+    setReAnswerData([]);
+    setReAnswerQuestionIndex(0);
+    
+    // ローカルストレージやセッションストレージもクリア
+    sessionStorage.removeItem('loginRedirect');
+    sessionStorage.removeItem('appState');
+    localStorage.removeItem('appState');
+  };
 
   // 再回答イベントリスナーを設定
   useEffect(() => {
@@ -183,6 +181,8 @@ function AppContent() {
   };
 
   const handleHomeClick = () => {
+    console.log('Home button clicked, resetting to start state');
+    resetAllStates();
     setState('start');
     setSelectedUser1(null);
     setSelectedUser2(null);
@@ -290,12 +290,6 @@ function AppContent() {
           setState('start');
           setReAnswerData([]);
           setReAnswerQuestionIndex(0);
-        }, 200);
-      }
-    } catch (err) {
-      console.error('Unexpected error submitting re-answer:', err);
-      throw err; // エラーを再スローして、ReAnswerQuestionCardでキャッチできるようにする
-    }
   };
 
   // 特別なユーザー組み合わせをチェックする関数

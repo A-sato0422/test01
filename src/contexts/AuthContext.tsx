@@ -155,6 +155,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: new Error('アカウント作成に失敗しました') };
       }
 
+      console.log('Account created successfully, user:', data.user.email);
+
       // usersテーブルにユーザー情報を保存
       const { error: insertUserError } = await supabase
         .from('users')
@@ -192,16 +194,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: insertAnswersError };
       }
 
-      // アカウント作成完了後、自動的にサインイン
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: tempData.email,
-        password: tempData.password,
-      });
-
-      if (signInError) {
-        console.error('Error signing in after signup:', signInError);
-        return { error: signInError };
-      }
+      // アカウント作成完了後は自動的にログイン状態になるため、
+      // 状態をクリアしてホーム画面への遷移を確実にする
+      sessionStorage.clear();
+      localStorage.removeItem('appState');
 
       return { error: null };
     } catch (err) {
@@ -215,10 +211,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       password,
     });
 
-    // ログイン成功時は必ずホーム画面に遷移するためのフラグを設定
+    // ログイン成功時の処理
     if (!error && data.user) {
-      // セッションストレージに遷移先を明示的に設定
-      sessionStorage.setItem('loginRedirect', 'home');
+      console.log('Login successful, user:', data.user.email);
+      // 状態をクリアしてホーム画面への遷移を確実にする
+      sessionStorage.clear();
+      localStorage.removeItem('appState');
     }
 
     return { error };
