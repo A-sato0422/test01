@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './contexts/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -17,6 +18,7 @@ import { supabase } from './lib/supabase';
 type AppState = 'splash' | 'start' | 'userSelection' | 'quiz1' | 'quiz2' | 'result' | 'reAnswer';
 
 function AppContent() {
+  const { user } = useAuth();
   const [state, setState] = useState<AppState>('splash');
   const [selectedUser1, setSelectedUser1] = useState<User | null>(null);
   const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
