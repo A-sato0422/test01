@@ -317,7 +317,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
           >
             <h4 className="font-bold text-lg mb-2">🎉 26歳は強運の年 🎉</h4>
             <p className="text-sm">
-              26歳はとても良い1年ないなることでしょう。<br>
+              26歳はとても良い1年ないなることでしょう。<br/>
               仕事もプライベートも順調で、相乗効果で肌ツヤも良くなることでしょう。
               
             </p>
