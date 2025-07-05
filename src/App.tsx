@@ -125,24 +125,6 @@ function AppContent() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // 全ての状態をリセットする関数
-  const resetAllStates = () => {
-    console.log('Resetting all application states');
-    setSelectedUser1(null);
-    setSelectedUser2(null);
-    setCurrentQuestionIndex(0);
-    setUser1Answers([]);
-    setUser2Answers([]);
-    setCompatibilityScore(0);
-    setReAnswerData([]);
-    setReAnswerQuestionIndex(0);
-    
-    // ローカルストレージやセッションストレージもクリア
-    sessionStorage.removeItem('loginRedirect');
-    sessionStorage.removeItem('appState');
-    localStorage.removeItem('appState');
-  };
-
   // 再回答イベントリスナーを設定
   useEffect(() => {
     const handleReAnswerEvent = () => {
@@ -336,24 +318,6 @@ function AppContent() {
     setTempReAnswerData([]);
     setReAnswerQuestionIndex(0);
     
-    // ローカルストレージやセッションストレージもクリア
-    sessionStorage.removeItem('loginRedirect');
-    sessionStorage.removeItem('appState');
-    localStorage.removeItem('appState');
-  };
-
-  // 元のresetAllStates関数を削除し、上記の更新版を使用
-  const originalResetAllStates = () => {
-    console.log('Resetting all application states');
-    setSelectedUser1(null);
-    setSelectedUser2(null);
-    setCurrentQuestionIndex(0);
-    setUser1Answers([]);
-    setUser2Answers([]);
-    setCompatibilityScore(0);
-    setReAnswerData([]);
-    setReAnswerQuestionIndex(0);
-      
     // ローカルストレージやセッションストレージもクリア
     sessionStorage.removeItem('loginRedirect');
     sessionStorage.removeItem('appState');
