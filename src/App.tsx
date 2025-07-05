@@ -184,6 +184,8 @@ function AppContent() {
     const questionId = reAnswerQuestionIndex + 1;
     
     try {
+      console.log('App: Submitting re-answer', { questionId, value, userId: user.id });
+      
       // データベースの回答を更新
       const { error } = await supabase
         .from('answers')
@@ -195,8 +197,10 @@ function AppContent() {
 
       if (error) {
         console.error('Error updating answer:', error);
-        return;
+        throw error;
       }
+
+      console.log('App: Answer updated successfully');
 
       // ローカルの回答データを更新
       const updatedAnswers = [...reAnswerData];
@@ -219,10 +223,18 @@ function AppContent() {
       
       setReAnswerData(updatedAnswers);
 
+      console.log('App: Local data updated, checking next step', {
+        currentIndex: reAnswerQuestionIndex,
+        totalQuestions: questions.length,
+        isLastQuestion: reAnswerQuestionIndex >= questions.length - 1
+      });
+
       // 次の質問に進むか完了
       if (reAnswerQuestionIndex < questions.length - 1) {
+        console.log('App: Moving to next question');
         setReAnswerQuestionIndex(reAnswerQuestionIndex + 1);
       } else {
+        console.log('App: Re-answer completed, returning to start');
         // 再回答完了 - スタート画面に戻る
         scrollToTop();
         setTimeout(() => {
@@ -233,6 +245,7 @@ function AppContent() {
       }
     } catch (err) {
       console.error('Unexpected error submitting re-answer:', err);
+      throw err; // エラーを再スローして、ReAnswerQuestionCardでキャッチできるようにする
     }
   };
 

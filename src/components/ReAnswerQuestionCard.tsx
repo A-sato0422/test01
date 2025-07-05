@@ -36,6 +36,10 @@ const ReAnswerQuestionCard: React.FC<ReAnswerQuestionCardProps> = ({
       // 少し遅延を入れてローディング状態を見せる
       await new Promise(resolve => setTimeout(resolve, 800));
       await onAnswer(value);
+      
+      // 成功した場合、状態をリセット
+      setIsSubmitting(false);
+      setSubmittedAnswer(null);
     } catch (error) {
       console.error('回答の送信に失敗しました:', error);
       setIsSubmitting(false);
