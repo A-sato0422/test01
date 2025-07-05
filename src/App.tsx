@@ -103,7 +103,7 @@ function AppContent() {
     const setupAuthListener = () => {
       // 既存のサブスクリプションがあれば解除
       if (authSubscription) {
-        authSubscription.unsubscribe();
+        authSubscription.subscription.unsubscribe();
       }
       
       // 認証状態の変更を監視
@@ -162,7 +162,7 @@ function AppContent() {
 
     return () => {
       if (authSubscription) {
-        authSubscription.unsubscribe();
+        authSubscription.subscription.unsubscribe();
       }
     };
   }, []); // 依存配列を空にして、一度だけ実行
