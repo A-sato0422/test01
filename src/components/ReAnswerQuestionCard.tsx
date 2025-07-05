@@ -41,7 +41,7 @@ const ReAnswerQuestionCard: React.FC<ReAnswerQuestionCardProps> = ({
       setIsSubmitting(false);
       setSubmittedAnswer(null);
     } catch (error) {
-      console.error('回答の送信に失敗しました:', error);
+      console.error('回答の保存に失敗しました:', error);
       setIsSubmitting(false);
       setSubmittedAnswer(null);
     }
@@ -72,8 +72,12 @@ const ReAnswerQuestionCard: React.FC<ReAnswerQuestionCardProps> = ({
             className="bg-white rounded-2xl p-6 shadow-2xl flex flex-col items-center"
           >
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-3" />
-            <p className="text-gray-700 font-medium">回答を更新中...</p>
-            <p className="text-sm text-gray-500 mt-1">しばらくお待ちください</p>
+            <p className="text-gray-700 font-medium">
+              {questionNumber === totalQuestions ? '全ての回答を保存中...' : '回答を記録中...'}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {questionNumber === totalQuestions ? 'データベースに保存しています' : 'しばらくお待ちください'}
+            </p>
           </motion.div>
         </motion.div>
       )}
@@ -153,12 +157,12 @@ const ReAnswerQuestionCard: React.FC<ReAnswerQuestionCardProps> = ({
             {question.question_text}
           </h2>
           <p className="text-sm text-gray-600">
-            現在の回答を変更する場合は、新しい選択肢をクリックしてください
+            回答を選択してください（変更は全問回答後に保存されます）
           </p>
           {currentAnswer && (
             <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
               <p className="text-sm text-blue-700">
-                現在の回答: <span className="font-medium">{answerLabels[currentAnswer - 1]}</span>
+                元の回答: <span className="font-medium">{answerLabels[currentAnswer - 1]}</span>
               </p>
             </div>
           )}
@@ -228,7 +232,7 @@ const ReAnswerQuestionCard: React.FC<ReAnswerQuestionCardProps> = ({
                   </span>
                   {isCurrentAnswer && !isSelected && (
                     <span className="ml-auto text-xs text-blue-600 font-medium">
-                      現在の回答
+                      元の回答
                     </span>
                   )}
                 </div>
@@ -258,12 +262,12 @@ const ReAnswerQuestionCard: React.FC<ReAnswerQuestionCardProps> = ({
             <div className="flex items-center justify-center">
               <Loader2 className="w-4 h-4 text-blue-500 animate-spin mr-2" />
               <span className="text-sm font-medium text-blue-700">
-                回答を更新しています...
+                {questionNumber === totalQuestions ? '全ての回答を保存中...' : '回答を記録中...'}
               </span>
             </div>
             <p className="text-xs text-blue-600 text-center mt-1">
               {questionNumber === totalQuestions 
-                ? '完了まで少々お待ちください' 
+                ? 'データベースに保存中です' 
                 : '次の質問に進むまでお待ちください'
               }
             </p>

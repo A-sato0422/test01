@@ -36,6 +36,7 @@ function AppContent() {
   // 再回答用の状態
   const [reAnswerData, setReAnswerData] = useState<Answer[]>([]);
   const [reAnswerQuestionIndex, setReAnswerQuestionIndex] = useState(0);
+  const [tempReAnswerData, setTempReAnswerData] = useState<Answer[]>([]);
 
   // デバッグ用のログ関数
   const debugLog = (message: string, data?: any) => {
@@ -213,6 +214,7 @@ function AppContent() {
       console.log('App: Current answers fetched:', currentAnswers);
       // 回答データを設定
       setReAnswerData(currentAnswers || []);
+      setTempReAnswerData(currentAnswers || []);
       setReAnswerQuestionIndex(0);
       
       console.log('App: Scrolling to top and transitioning to reAnswer state');
@@ -232,69 +234,130 @@ function AppContent() {
 
     const questionId = reAnswerQuestionIndex + 1;
     
-    try {
-      console.log('App: Submitting re-answer', { questionId, value, userId: user.id });
-      
-      // データベースの回答を更新
-      const { error } = await supabase
-        .from('answers')
-        .upsert([{
-          user_id: user.id,
-          question_id: questionId,
-          answer_value: value
-        }], { onConflict: 'user_id,question_id' });
-
-      if (error) {
-        console.error('Error updating answer:', error);
-        throw error;
-      }
-
-      console.log('App: Answer updated successfully');
-
-      // ローカルの回答データを更新
-      const updatedAnswers = [...reAnswerData];
-      const existingAnswerIndex = updatedAnswers.findIndex(a => a.question_id === questionId);
-      
-      if (existingAnswerIndex >= 0) {
-        updatedAnswers[existingAnswerIndex] = {
-          ...updatedAnswers[existingAnswerIndex],
-          answer_value: value
-        };
-      } else {
-        updatedAnswers.push({
-          id: questionId,
-          user_id: user.id,
-          question_id: questionId,
-          answer_value: value,
-          created_at: new Date().toISOString()
-        });
-      }
-      
-      setReAnswerData(updatedAnswers);
-
-      console.log('App: Local data updated, checking next step', {
-        currentIndex: reAnswerQuestionIndex,
-        totalQuestions: questions.length,
-        isLastQuestion: reAnswerQuestionIndex >= questions.length - 1
+    console.log('App: Submitting re-answer', { questionId, value, userId: user.id });
+    
+    // 一時的な回答データを更新（データベースには保存しない）
+    const updatedTempAnswers = [...tempReAnswerData];
+    const existingAnswerIndex = updatedTempAnswers.findIndex(a => a.question_id === questionId);
+    
+    if (existingAnswerIndex >= 0) {
+      updatedTempAnswers[existingAnswerIndex] = {
+        ...updatedTempAnswers[existingAnswerIndex],
+        answer_value: value
+      };
+    } else {
+      updatedTempAnswers.push({
+        id: questionId,
+        user_id: user.id,
+        question_id: questionId,
+        answer_value: value,
+        created_at: new Date().toISOString()
       });
+    }
+    
+    setTempReAnswerData(updatedTempAnswers);
 
-      // 次の質問に進むか完了
-      if (reAnswerQuestionIndex < questions.length - 1) {
-        console.log('App: Moving to next question');
-        setReAnswerQuestionIndex(reAnswerQuestionIndex + 1);
-      } else {
-        console.log('App: Re-answer completed, returning to start');
+    console.log('App: Temporary data updated, checking next step', {
+      currentIndex: reAnswerQuestionIndex,
+      totalQuestions: questions.length,
+      isLastQuestion: reAnswerQuestionIndex >= questions.length - 1
+    });
+
+    // 次の質問に進むか完了
+    if (reAnswerQuestionIndex < questions.length - 1) {
+      console.log('App: Moving to next question');
+      setReAnswerQuestionIndex(reAnswerQuestionIndex + 1);
+    } else {
+      console.log('App: All questions answered, saving to database');
+      // 全ての質問に回答完了 - データベースに一括保存
+      try {
+        // 全ての回答をデータベースに一括更新
+        const answersToUpdate = updatedTempAnswers.map(answer => ({
+          user_id: user.id,
+          question_id: answer.question_id,
+          answer_value: answer.answer_value
+        }));
+
+        const { error } = await supabase
+          .from('answers')
+          .upsert(answersToUpdate, { onConflict: 'user_id,question_id' });
+
+        if (error) {
+          console.error('Error batch updating answers:', error);
+          throw error;
+        }
+
+        console.log('App: All answers saved successfully');
+        
         // 再回答完了 - スタート画面に戻る
         scrollToTop();
         setTimeout(() => {
           setState('start');
           setReAnswerData([]);
+          setTempReAnswerData([]);
+          setReAnswerQuestionIndex(0);
+        }, 200);
+      } catch (err) {
+        console.error('Error saving answers to database:', err);
+        // エラーが発生した場合もスタート画面に戻る（一時データは破棄）
+        scrollToTop();
+        setTimeout(() => {
+          setState('start');
+          setReAnswerData([]);
+          setTempReAnswerData([]);
           setReAnswerQuestionIndex(0);
         }, 200);
       }
-    } catch (err) {
-      console.error('Unexpected error submitting re-answer:', err);
     }
+  };
+
+  const handleReAnswerCancel = () => {
+    console.log('App: Re-answer cancelled, discarding temporary data');
+    // キャンセル時は一時データを破棄してスタート画面に戻る
+    scrollToTop();
+    setTimeout(() => {
+      setState('start');
+      setReAnswerData([]);
+      setTempReAnswerData([]);
+      setReAnswerQuestionIndex(0);
+    }, 200);
+  };
+
+  // 全ての状態をリセットする関数を更新
+  const resetAllStates = () => {
+    console.log('Resetting all application states');
+    setSelectedUser1(null);
+    setSelectedUser2(null);
+    setCurrentQuestionIndex(0);
+    setUser1Answers([]);
+    setUser2Answers([]);
+    setCompatibilityScore(0);
+    setReAnswerData([]);
+    setTempReAnswerData([]);
+    setReAnswerQuestionIndex(0);
+    
+    // ローカルストレージやセッションストレージもクリア
+    sessionStorage.removeItem('loginRedirect');
+    sessionStorage.removeItem('appState');
+    localStorage.removeItem('appState');
+  };
+
+  // 元のresetAllStates関数を削除し、上記の更新版を使用
+  const originalResetAllStates = () => {
+    console.log('Resetting all application states');
+    setSelectedUser1(null);
+    setSelectedUser2(null);
+    setCurrentQuestionIndex(0);
+    setUser1Answers([]);
+    setUser2Answers([]);
+    setCompatibilityScore(0);
+    setReAnswerData([]);
+    setReAnswerQuestionIndex(0);
+      
+    // ローカルストレージやセッションストレージもクリア
+    sessionStorage.removeItem('loginRedirect');
+    sessionStorage.removeItem('appState');
+    localStorage.removeItem('appState');
   };
 
   // 特別なユーザー組み合わせをチェックする関数
@@ -684,8 +747,8 @@ function AppContent() {
                         questionNumber={reAnswerQuestionIndex + 1}
                         totalQuestions={questions.length}
                         onAnswer={handleReAnswerSubmit}
-                        currentAnswer={reAnswerData.find(a => a.question_id === reAnswerQuestionIndex + 1)?.answer_value}
-                        onCancel={() => setState('start')}
+                        currentAnswer={tempReAnswerData.find(a => a.question_id === reAnswerQuestionIndex + 1)?.answer_value}
+                        onCancel={handleReAnswerCancel}
                       />
                     ) : (
                       <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-purple-100 flex items-center justify-center">
