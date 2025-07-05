@@ -316,7 +316,7 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
             className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-2xl p-6 mb-6 relative z-20"
           >
             <h4 className="font-bold text-lg mb-2">🎉 26歳は強運の年 🎉</h4>
-            <p className="text-sm">
+            <p className="text-sm text-left">
               26歳はとても良い1年ないなることでしょう。<br/>
               仕事もプライベートも順調で、相乗効果で肌ツヤも良くなることでしょう。<br/>
               「若くなった？」と周りから言われますが、それは社交辞令ではなく、事実なのでありがたく受け取りましょう。
