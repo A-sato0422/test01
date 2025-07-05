@@ -7,6 +7,7 @@ import { User } from '../types';
 interface UserSelectionProps {
   onUsersSelected: (user1: User, user2: User) => void;
   currentUser: User;
+  refreshTrigger?: number;
 }
 
 interface UserWithAnswerStatus extends User {
@@ -14,7 +15,7 @@ interface UserWithAnswerStatus extends User {
   answerCount: number;
 }
 
-const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentUser }) => {
+const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentUser, refreshTrigger }) => {
   // デバッグ用のログ関数
   const debugLog = (message: string, data?: any) => {
     console.log(`[UserSelection] ${message}`, data);
@@ -50,6 +51,13 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
     fetchQuestions();
   }, []);
 
+  // refreshTriggerが変更された時にユーザー一覧を再取得
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      debugLog('Refresh trigger detected, refetching users', { refreshTrigger });
+      fetchUsers();
+    }
+  }, [refreshTrigger]);
   const fetchQuestions = async () => {
     console.log('[UserSelection] Starting to fetch questions...');
     setQuestionsLoading(true);
@@ -103,6 +111,7 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
   };
 
   const fetchUsers = async () => {
+    debugLog('Starting to fetch users...');
     setLoading(true);
     setError('');
 
@@ -114,10 +123,12 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
         .order('created_at', { ascending: false });
 
       if (usersError) {
+        debugLog('Error fetching users:', usersError);
         setError('ユーザー一覧の取得に失敗しました');
         return;
       }
 
+      debugLog('Fetched users from database:', usersData);
       // 各ユーザーの回答状況を取得
       const usersWithAnswerStatus = await Promise.all(
         (usersData || []).map(async (user) => {
@@ -134,11 +145,14 @@ const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentU
         })
       );
 
+      debugLog('Users with answer status:', usersWithAnswerStatus);
       setUsers(usersWithAnswerStatus);
     } catch (err) {
+      debugLog('Unexpected error fetching users:', err);
       setError('予期しないエラーが発生しました');
     } finally {
       setLoading(false);
+      debugLog('User fetching completed');
     }
   };
 

@@ -8,9 +8,10 @@ interface UserProfileProps {
   isOpen: boolean;
   onClose: () => void;
   onStartReAnswer?: () => void;
+  onProfileUpdated?: () => void;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose, onStartReAnswer }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose, onStartReAnswer, onProfileUpdated }) => {
   const { user, signOut, updateUserProfile } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -89,6 +90,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose, onStartReAns
         setUserData(updatedUserData);
         setIsEditing(false);
         setError('');
+        
+        // プロフィール更新完了を親コンポーネントに通知
+        if (onProfileUpdated) {
+          console.log('Profile updated, notifying parent component');
+          onProfileUpdated();
+        }
       }
     } catch (err) {
       setError('予期しないエラーが発生しました');

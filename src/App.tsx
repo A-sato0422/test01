@@ -34,6 +34,8 @@ function AppContent() {
   const [reAnswerQuestionIndex, setReAnswerQuestionIndex] = useState(0);
   const [tempReAnswerData, setTempReAnswerData] = useState<Answer[]>([]);
 
+  // ユーザー一覧の更新トリガー
+  const [userListRefreshTrigger, setUserListRefreshTrigger] = useState(0);
   // デバッグ用のログ関数
   const debugLog = (message: string, data?: any) => {
     console.log(`[DEBUG] ${message}`, data);
@@ -169,6 +171,12 @@ function AppContent() {
     }, 100);
   };
 
+  // プロフィール更新時の処理
+  const handleProfileUpdated = () => {
+    console.log('App: Profile updated, triggering user list refresh');
+    // ユーザー一覧の更新をトリガー
+    setUserListRefreshTrigger(prev => prev + 1);
+  };
   const handleSplashComplete = () => {
     scrollToTop();
     setState('start');
@@ -614,7 +622,7 @@ function AppContent() {
 
         {state !== 'splash' && (
           <>
-            <Header onHomeClick={handleHomeClick} />
+            <Header onHomeClick={handleHomeClick} onProfileUpdated={handleProfileUpdated} />
             <div className="pt-3">
               {state === 'start' && (
                 <motion.div
@@ -642,6 +650,7 @@ function AppContent() {
                     <UserSelection
                       onUsersSelected={handleUsersSelected}
                       currentUser={selectedUser1!}
+                      refreshTrigger={userListRefreshTrigger}
                     />
                   </ProtectedRoute>
                 </motion.div>

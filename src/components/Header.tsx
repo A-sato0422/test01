@@ -8,9 +8,10 @@ import UserProfile from './UserProfile';
 
 interface HeaderProps {
   onHomeClick?: () => void;
+  onProfileUpdated?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
+const Header: React.FC<HeaderProps> = ({ onHomeClick, onProfileUpdated }) => {
   const { user, loading } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
@@ -53,6 +54,31 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
     fetchUserName();
   }, [user]);
 
+  // プロフィール更新時にユーザー名を再取得
+  const handleProfileUpdated = async () => {
+    console.log('Header: Profile updated, refreshing user name');
+    if (user) {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!error && data) {
+          setUserName(data.name);
+          console.log('Header: User name updated to:', data.name);
+        }
+      } catch (err) {
+        console.error('Error refreshing user name:', err);
+      }
+    }
+    
+    // 親コンポーネントにも通知
+    if (onProfileUpdated) {
+      onProfileUpdated();
+    }
+  };
   const handleAuthClick = () => {
     setAuthMode('signin');
     setAuthModalOpen(true);
@@ -176,6 +202,7 @@ const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
           console.log('Header: Dispatching startReAnswer event');
           window.dispatchEvent(new CustomEvent('startReAnswer'));
         }}
+        onProfileUpdated={handleProfileUpdated}
       />
     </>
   );
