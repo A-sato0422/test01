@@ -315,10 +315,11 @@ const CompatibilityResult: React.FC<CompatibilityResultProps> = ({
             transition={{ delay: 1.5 }}
             className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-2xl p-6 mb-6 relative z-20"
           >
-            <h4 className="font-bold text-lg mb-2">🎉 特別なお祝いメッセージ 🎉</h4>
+            <h4 className="font-bold text-lg mb-2">🎉 26歳は強運の年 🎉</h4>
             <p className="text-sm">
-              お二人の素晴らしい相性に心からお祝い申し上げます！
-              この奇跡的な出会いが、永遠の幸せへと続きますように。
+              26歳はとても良い1年ないなることでしょう。<br/>
+              仕事もプライベートも順調で、相乗効果で肌ツヤも良くなることでしょう。
+              
             </p>
           </motion.div>
         )}
