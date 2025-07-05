@@ -131,11 +131,13 @@ function AppContent() {
   };
 
   const handleUsersSelected = async (user1: User, user2: User) => {
+    debugLog('handleUsersSelected called', { user1: user1.name, user2: user2.name });
     setSelectedUser1(user1);
     setSelectedUser2(user2);
     
     // 特別なユーザー組み合わせの場合は直接結果画面へ
     if (isSpecialUserCombination(user1, user2)) {
+      debugLog('Special user combination detected');
       setCompatibilityScore(100);
       
       // 結果画面に遷移する前にスクロールを最上部に移動
@@ -148,11 +150,15 @@ function AppContent() {
       return;
     }
     
+    debugLog('Fetching existing answers for both users');
     // 既存の回答データを取得
     const [user1AnswersData, user2AnswersData] = await Promise.all([
       supabase.from('answers').select('*').eq('user_id', user1.id).order('question_id'),
       supabase.from('answers').select('*').eq('user_id', user2.id).order('question_id')
     ]);
+
+    debugLog('User1 answers data:', user1AnswersData);
+    debugLog('User2 answers data:', user2AnswersData);
 
     const user1ExistingAnswers = user1AnswersData.data || [];
     const user2ExistingAnswers = user2AnswersData.data || [];
@@ -161,16 +167,26 @@ function AppContent() {
     const hasAllAnswers1 = user1ExistingAnswers.length === questions.length;
     const hasAllAnswers2 = user2ExistingAnswers.length === questions.length;
 
+    debugLog('Answer status check:', {
+      user1HasAllAnswers: hasAllAnswers1,
+      user2HasAllAnswers: hasAllAnswers2,
+      user1AnswerCount: user1ExistingAnswers.length,
+      user2AnswerCount: user2ExistingAnswers.length,
+      totalQuestions: questions.length
+    });
+
     if (hasAllAnswers1 && hasAllAnswers2) {
       // 両方とも回答済み - 直接結果を計算
+      debugLog('Both users have all answers, calculating compatibility');
       setUser1Answers(user1ExistingAnswers);
       setUser2Answers(user2ExistingAnswers);
       
       const score = calculateCompatibility(user1ExistingAnswers, user2ExistingAnswers);
+      debugLog('Calculated compatibility score:', score);
       setCompatibilityScore(score);
 
       // 相性結果をデータベースに保存
-      await supabase
+      const { error: saveError } = await supabase
         .from('compatibility_results')
         .upsert([{
           user1_id: user1.id,
@@ -178,27 +194,37 @@ function AppContent() {
           compatibility_score: score
         }], { onConflict: 'user1_id,user2_id' });
 
+      if (saveError) {
+        debugLog('Error saving compatibility result:', saveError);
+      } else {
+        debugLog('Compatibility result saved successfully');
+      }
+
       // 結果画面に遷移する前にスクロールを最上部に移動
       scrollToTop();
       
       // 少し遅延してから画面遷移（スクロールが完了してから）
       setTimeout(() => {
+        debugLog('Transitioning to result screen');
         setState('result');
       }, 200);
     } else if (hasAllAnswers1 && !hasAllAnswers2) {
       // ユーザー1は回答済み、ユーザー2は未回答
+      debugLog('User1 has answers, User2 needs to answer');
       setUser1Answers(user1ExistingAnswers);
       setUser2Answers([]);
       setCurrentQuestionIndex(0);
       setState('quiz2');
     } else if (!hasAllAnswers1 && hasAllAnswers2) {
       // ユーザー1は未回答、ユーザー2は回答済み
+      debugLog('User1 needs to answer, User2 has answers');
       setUser1Answers([]);
       setUser2Answers(user2ExistingAnswers);
       setCurrentQuestionIndex(0);
       setState('quiz1');
     } else {
       // 両方とも未回答または部分的に回答済み
+      debugLog('Both users need to answer or have partial answers');
       setUser1Answers(user1ExistingAnswers);
       setUser2Answers(user2ExistingAnswers);
       setCurrentQuestionIndex(user1ExistingAnswers.length);

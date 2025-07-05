@@ -15,6 +15,11 @@ interface UserWithAnswerStatus extends User {
 }
 
 const UserSelection: React.FC<UserSelectionProps> = ({ onUsersSelected, currentUser }) => {
+  // デバッグ用のログ関数
+  const debugLog = (message: string, data?: any) => {
+    console.log(`[UserSelection] ${message}`, data);
+  };
+
   const [users, setUsers] = useState<UserWithAnswerStatus[]>([]);
   const [selectedUser1, setSelectedUser1] = useState<UserWithAnswerStatus | null>(null);
   const [selectedUser2, setSelectedUser2] = useState<UserWithAnswerStatus | null>(null);
