@@ -191,7 +191,7 @@ function AppContent() {
           user_id: user.id,
           question_id: questionId,
           answer_value: value
-        }]);
+        }], { onConflict: 'user_id,question_id' });
 
       if (error) {
         console.error('Error updating answer:', error);
@@ -365,7 +365,7 @@ function AppContent() {
         user_id: selectedUser1.id,
         question_id: currentQuestionIndex + 1,
         answer_value: value
-      }]);
+      }], { onConflict: 'user_id,question_id' });
 
     const newAnswers = [...user1Answers, answer];
     setUser1Answers(newAnswers);
@@ -428,7 +428,7 @@ function AppContent() {
         user_id: selectedUser2.id,
         question_id: currentQuestionIndex + 1,
         answer_value: value
-      }]);
+      }], { onConflict: 'user_id,question_id' });
 
     const newAnswers = [...user2Answers, answer];
     setUser2Answers(newAnswers);
